@@ -1,0 +1,11 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "D:\\MCSP060 Project\\Yummy (Food Delivery App)\\yummy-backend\\db.sqlite3",
+            "name": "Yummy"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}
