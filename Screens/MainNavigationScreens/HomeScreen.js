@@ -4,9 +4,9 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
   RefreshControl,
+  StatusBar,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -18,12 +18,10 @@ import SmallRestrauntCard from "../../components/HomeScreenComponents/SmallRestr
 
 import BannerSlider from "../../components/HomeScreenComponents/BannerSlider";
 import FooterComponent from "../../components/FooterComponent";
-import axios from "axios";
-import { API_URL } from "@env";
 
 const HomeScreen = ({ navigation }) => {
   const width = Dimensions.get("window").width;
-  const { logoutCustomer, phoneNo, restraunts,setRefreshing,refreshing,popularRestraunts } = authContext();
+  const { logoutCustomer, user, restraunts,setRefreshing,refreshing,popularRestraunts } = authContext();
   const cleanStorage = async () => {
     await AsyncStorage.clear();
 
@@ -162,10 +160,11 @@ const HomeScreen = ({ navigation }) => {
         margin: 5,
       }}
     >
+      <StatusBar backgroundColor={"#f78783"} />
       <HeaderComponent />
-      <TouchableOpacity onPress={cleanStorage}>
-        <Text>Clean Async Storage</Text>
-      </TouchableOpacity>
+      {/* <TouchableOpacity onPress={cleanStorage}>
+        <Text>Clean Async Storage {user?.id}</Text>
+      </TouchableOpacity> */}
 
       <ScrollView
         style={{ flex: 1, marginTop: 20 }}
@@ -198,6 +197,7 @@ const HomeScreen = ({ navigation }) => {
           showsHorizontalScrollIndicator={false}
         />
         {/* Popular Resturants */}
+        
         <View style={{ marginTop: 30 }}>
           <Text style={{ fontSize: 16, fontWeight: "700" }}>
             Popular Brands

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LoadingComponent from '../components/LoadingComponent';
+import Toast from 'react-native-simple-toast';
 
 export default function AppNav() {
   const {isAuthenticated, setLocation,setIsAuthenticated} = authContext()
@@ -21,6 +22,7 @@ export default function AppNav() {
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
+        Toast.show('Permission to access location was denied', Toast.LONG);
         return;
       }
 

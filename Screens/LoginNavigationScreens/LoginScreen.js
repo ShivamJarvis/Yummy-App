@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View,Image, TextInput, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native'
+import { StyleSheet, Text, View,Image, TextInput, TouchableOpacity, StatusBar, ActivityIndicator, ToastAndroid } from 'react-native'
 import React, { useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
@@ -7,18 +7,21 @@ import {authContext} from './../../contexts/AuthContext'
 
 
 const LoginScreen = ({navigation}) => {
-    const {setPhoneNo,loginCustomer,isLoading} = authContext()
+    const {setPhoneNo,phoneNo,loginCustomer,isLoading,message,getOTP} = authContext()
     const handleUserInput = () => {
+        getOTP()
+        
         navigation.navigate("VerificationCode")
     }
 
     const handleUserPressInput = (text) => {
         setPhoneNo(text)
-  
+        
     }
 
     useEffect(()=>{
     loginCustomer()
+
     },[])
 
     if(isLoading){

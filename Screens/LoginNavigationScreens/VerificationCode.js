@@ -9,6 +9,9 @@ import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Feather";
 import Svg, { Path } from "react-native-svg";
+import LoadingComponent from './../../components/LoadingComponent'
+
+
 
 import {
   CodeField,
@@ -24,7 +27,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const CELL_COUNT = 6;
 
 const VerificationCode = ({ navigation }) => {
-  const {phoneNo,setIsAuthenticated} = authContext()
+  const {phoneNo,loginWithOTP,setLoginOtp,isLoading,isAuthenticated} = authContext()
   const [value, setValue] = useState("");
   const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
   const [props, getCellOnLayoutHandler] = useClearByFocusCell({
@@ -33,14 +36,18 @@ const VerificationCode = ({ navigation }) => {
   });
 
   const handleUserOTP = () =>{
-    setIsAuthenticated(true)
-    console.log(value)
-    AsyncStorage.setItem("isAuthenticated", "true");
+    setLoginOtp(value)
+    loginWithOTP(value)
     
+  }
+
+  if(isLoading){
+    return <LoadingComponent />
   }
 
   return (
     <View style={{ height: "100%" }}>
+      
       <StatusBar backgroundColor={"#ffffff"} barStyle="dark-content" />
       <SafeAreaView>
         <View style={styles.header}>

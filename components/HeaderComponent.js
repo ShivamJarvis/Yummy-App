@@ -12,7 +12,7 @@ const HeaderComponent = () => {
         'longitude':location.coords.longitude
     }
     Location.reverseGeocodeAsync(latLongLocation).then((result)=>{
-        console.log(result[0].city)
+        // console.log(result[0])
         setLocationName(`${result[0].district}, ${result[0].subregion} - ${result[0].postalCode}`)
     }).catch((err)=>{
         console.log(err)

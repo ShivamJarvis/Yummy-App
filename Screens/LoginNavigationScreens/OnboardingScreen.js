@@ -1,17 +1,20 @@
 import { StyleSheet, Text, View,Image } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import Onboarding from "react-native-onboarding-swiper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const OnboardingScreen = ({navigation}) => {
+
   return (
     <SafeAreaView style={{minHeight:"100%"}}>
       <Onboarding
       onSkip={()=>navigation.replace("LoginScreen")}
       onDone={()=>navigation.navigate("LoginScreen")}
+      
         pages={[
           {
             backgroundColor: "#f7d383",
+            
             image: <Image source={require("../../assets/images/Yummy-1.png")} style={{width:400,height:400}}  />,
             title: "Welcome to Yummy",
             subtitle: "Fresh food at your doorstep",

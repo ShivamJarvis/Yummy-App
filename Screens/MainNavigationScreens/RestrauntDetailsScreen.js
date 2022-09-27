@@ -5,6 +5,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  RefreshControl
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import Icon from "react-native-vector-icons/Feather";
@@ -22,16 +23,29 @@ import { API_URL } from "@env";
 
 const RestrauntDetails = ({ route, navigation }) => {
   let today = new Date();
+  const [refreshing,setRefreshing] = useState(false)
   let currentTime = today.toLocaleTimeString("en-SE");
   const { id } = route.params;
   const [isLoading, setIsLoading] = useState(true);
   const [restraunt, setRestraunt] = useState({});
 
+  const wait = timeout => {
+    return new Promise(resolve => setTimeout(resolve, timeout));
+  };
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    wait(2000).then(() => setRefreshing(false));
+  }, []);
+
+
   const [restrauntMenu, setRestrauntMenu] = useState([]);
+  
 
   const [activeSections, setActiveSections] = useState([]);
 
   useEffect(() => {
+    setIsLoading(true)
     axios
       .get(`${API_URL}/restraunt/${id}`)
       .then((data) => {
@@ -57,165 +71,12 @@ const RestrauntDetails = ({ route, navigation }) => {
         setIsLoading(false);
       })
       .catch((err) => {
+        console.log(err)
         setIsLoading(false);
       });
-  }, []);
+  }, [id,refreshing]);
 
-  const dishesData = [
-    {
-      id: 1,
-      title: "Snacks",
-      isServicable: true,
-      dishes: [
-        {
-          id: 1,
-          name: "Samosa",
-          isVeg: true,
-          isBestSeller: true,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://static.toiimg.com/thumb/61050397.cms?width=1200&height=900",
-        },
-        {
-          id: 2,
-          name: "Kachori",
-          isVeg: true,
-          isBestSeller: true,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://www.funfoodfrolic.com/wp-content/uploads/2022/03/Kachori-Blog.jpg",
-        },
-        {
-          id: 3,
-          name: "Bread Pakora",
-          isVeg: true,
-          isBestSeller: false,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://dinedelicious.in/wp-content/uploads/2021/07/Bread-Pakora-7.jpg",
-        },
-        {
-          id: 3,
-          name: "Mix Bhajiya",
-          isVeg: true,
-          isBestSeller: false,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://www.recipeingujarati.com/wp-content/uploads/2021/10/dungri-na-bhajiya-recipe-in-gujarati.jpg",
-        },
-      ],
-    },
-    {
-      id: 2,
-      title: "Breakfast",
-      isServicable: false,
-      dishes: [
-        {
-          id: 1,
-          name: "Samosa",
-          isVeg: true,
-          isBestSeller: false,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://static.toiimg.com/thumb/61050397.cms?width=1200&height=900",
-        },
-        {
-          id: 2,
-          name: "Kachori",
-          isVeg: true,
-          isBestSeller: false,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://www.funfoodfrolic.com/wp-content/uploads/2022/03/Kachori-Blog.jpg",
-        },
-        {
-          id: 3,
-          name: "Bread Pakora",
-          isVeg: true,
-          isBestSeller: false,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://dinedelicious.in/wp-content/uploads/2021/07/Bread-Pakora-7.jpg",
-        },
-        {
-          id: 3,
-          name: "Mix Bhajiya",
-          isVeg: true,
-          isBestSeller: false,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://www.recipeingujarati.com/wp-content/uploads/2021/10/dungri-na-bhajiya-recipe-in-gujarati.jpg",
-        },
-      ],
-    },
-    {
-      id: 3,
-      title: "Chai Time",
-      isServicable: true,
-      dishes: [
-        {
-          id: 1,
-          name: "Samosa",
-          isVeg: true,
-          isBestSeller: false,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://static.toiimg.com/thumb/61050397.cms?width=1200&height=900",
-        },
-        {
-          id: 2,
-          name: "Kachori",
-          isVeg: true,
-          isBestSeller: false,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://www.funfoodfrolic.com/wp-content/uploads/2022/03/Kachori-Blog.jpg",
-        },
-        {
-          id: 3,
-          name: "Bread Pakora",
-          isVeg: true,
-          isBestSeller: false,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://dinedelicious.in/wp-content/uploads/2021/07/Bread-Pakora-7.jpg",
-        },
-        {
-          id: 3,
-          name: "Mix Bhajiya",
-          isVeg: true,
-          isBestSeller: false,
-          price: "126",
-          rating: "3.6",
-          totalSell: "40",
-          imageUrl:
-            "https://www.recipeingujarati.com/wp-content/uploads/2021/10/dungri-na-bhajiya-recipe-in-gujarati.jpg",
-        },
-      ],
-    },
-  ];
+
 
   if (isLoading) {
     return <LoadingComponent />;
@@ -223,7 +84,9 @@ const RestrauntDetails = ({ route, navigation }) => {
 
   return (
     <SafeAreaView style={{ minHeight: "100%", backgroundColor: "#ffffff" }}>
-      <ScrollView>
+      <ScrollView refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
         <View style={styles.topImageContainer}>
           <Image
             source={{
