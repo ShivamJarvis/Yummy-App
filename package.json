@@ -22,6 +22,8 @@
     "nativewind": "^2.0.10",
     "react": "18.0.0",
     "react-native": "0.69.5",
+    "react-native-awesome-alerts": "^2.0.0",
+    "react-native-bouncy-checkbox": "^3.0.4",
     "react-native-collapsible": "^1.6.0",
     "react-native-confirmation-code-field": "^7.3.0",
     "react-native-dotenv": "^3.3.1",

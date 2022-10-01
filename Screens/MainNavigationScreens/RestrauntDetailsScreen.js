@@ -5,9 +5,9 @@ import {
   Text,
   TouchableOpacity,
   View,
-  RefreshControl
+  RefreshControl,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Icon from "react-native-vector-icons/Feather";
 import FaIcon from "react-native-vector-icons/FontAwesome";
 import IoniIcon from "react-native-vector-icons/Ionicons";
@@ -20,17 +20,23 @@ import Unorderedlist from "react-native-unordered-list";
 import axios from "axios";
 import LoadingComponent from "../../components/LoadingComponent";
 import { API_URL } from "@env";
+import { setStatusBarNetworkActivityIndicatorVisible } from "expo-status-bar";
+import { authContext } from "../../contexts/AuthContext";
 
 const RestrauntDetails = ({ route, navigation }) => {
   let today = new Date();
-  const [refreshing,setRefreshing] = useState(false)
+
+  const [refreshing, setRefreshing] = useState(false);
   let currentTime = today.toLocaleTimeString("en-SE");
   const { id } = route.params;
   const [isLoading, setIsLoading] = useState(true);
+  const [cartReloading, setCartReloading] = useState(true);
   const [restraunt, setRestraunt] = useState({});
+  const [isRestrauntOpen, setRestrauntOpen] = useState(true);
 
-  const wait = timeout => {
-    return new Promise(resolve => setTimeout(resolve, timeout));
+
+  const wait = (timeout) => {
+    return new Promise((resolve) => setTimeout(resolve, timeout));
   };
 
   const onRefresh = React.useCallback(() => {
@@ -38,18 +44,23 @@ const RestrauntDetails = ({ route, navigation }) => {
     wait(2000).then(() => setRefreshing(false));
   }, []);
 
-
   const [restrauntMenu, setRestrauntMenu] = useState([]);
-  
 
   const [activeSections, setActiveSections] = useState([]);
 
   useEffect(() => {
-    setIsLoading(true)
+    setIsLoading(true);
     axios
       .get(`${API_URL}/restraunt/${id}`)
       .then((data) => {
         setRestraunt(data.data);
+
+        if(currentTime >= data.data.opening_timing && currentTime < data.data.closing_timing){
+          setRestrauntOpen(true)
+        }
+        else{
+          setRestrauntOpen(false)
+        }
 
         axios
           .get(`${API_URL}/restraunt/menu-heads/?restraunt=${id}`)
@@ -71,10 +82,11 @@ const RestrauntDetails = ({ route, navigation }) => {
         setIsLoading(false);
       })
       .catch((err) => {
-        console.log(err)
+        console.log(err);
         setIsLoading(false);
       });
-  }, [id,refreshing]);
+  
+  }, [id, refreshing]);
 
 
 
@@ -82,11 +94,15 @@ const RestrauntDetails = ({ route, navigation }) => {
     return <LoadingComponent />;
   }
 
+  
+
   return (
     <SafeAreaView style={{ minHeight: "100%", backgroundColor: "#ffffff" }}>
-      <ScrollView refreshControl={
+      <ScrollView
+        refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }>
+        }
+      >
         <View style={styles.topImageContainer}>
           <Image
             source={{
@@ -153,6 +169,15 @@ const RestrauntDetails = ({ route, navigation }) => {
           </Text>
         </View>
 
+        {!isRestrauntOpen && (
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
+            <Image
+              source={require("./../../assets/images/closed.gif")}
+              style={{ width: 150, height: 150 }}
+            />
+          </View>
+        )}
+
         <View
           style={{
             marginHorizontal: 10,
@@ -206,7 +231,7 @@ const RestrauntDetails = ({ route, navigation }) => {
             }}
             renderContent={({ menu }) => {
               return menu.map((dish, index) => {
-                return <DishCard key={index} dish={dish} />;
+                return <DishCard  key={dish.id} restrauntName={restraunt.name}  restrauntId={id} cartReloading={cartReloading} setCartReloading = {setCartReloading} dish={dish} isRestrauntOpen={isRestrauntOpen} />;
               });
             }}
             onChange={(active) => setActiveSections(active)}

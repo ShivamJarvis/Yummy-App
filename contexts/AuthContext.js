@@ -21,7 +21,10 @@ export const AuthProvider = ({ children }) => {
   const [message, setMessage] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [cart,setCart] = useState({})
+  const [customisedItems,setCustomisedItems] = useState({})
+
 
 
   useEffect(() => {
@@ -181,6 +184,10 @@ export const AuthProvider = ({ children }) => {
     accessToken,
     loginOtp,
     setLoginOtp,
+    cart,
+    setCart,
+    customisedItems,
+    setCustomisedItems,
   };
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
