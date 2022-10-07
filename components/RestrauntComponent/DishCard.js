@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Dimensions,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 import React, { useEffect, useRef, useState } from "react";
@@ -13,8 +14,9 @@ import MciIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import { AirbnbRating } from "react-native-ratings";
 import RBSheet from "react-native-raw-bottom-sheet";
 import { authContext } from "../../contexts/AuthContext";
-import AwesomeAlert from 'react-native-awesome-alerts';
-
+import AwesomeAlert from "react-native-awesome-alerts";
+import axios from "axios";
+import { API_URL } from "@env";
 
 const DishCard = ({
   dish,
@@ -22,14 +24,91 @@ const DishCard = ({
   restrauntId,
   cartReloading,
   setCartReloading,
-  restrauntName
+  restrauntName,
 }) => {
   let today = new Date();
-  const { cart, setCart, customisedItems, setCustomisedItems } = authContext();
+  const {
+    cart,
+    setCart,
+    deleteCart,
+    cartRestrauntId,
+    setCartRestrauntId,
+    addItemToCart,
+    removeItemToCart,
+    serverCart,
+    setServerCart,
+    dishToCart,
+    accessToken
+  } = authContext();
+  const [customisedItems, setCustomisedItems] = useState([]);
   const cutomizeRef = useRef();
+  const addMoreCustomiseRef = useRef();
   const [isInCart, setIsInCart] = useState(null);
+
   const [showAlert, setshowAlert] = useState(false);
+  const [iWillChoose, setIWillChoose] = useState(false);
+  const [uniqueId, setUniqueId] = useState(null);
   let currentTime = today.toLocaleTimeString("en-SE");
+
+  const handleIsInCart = () => {
+    if (serverCart == null) {
+      return;
+    }
+    if (serverCart.cart) {
+      serverCart?.cart.map((cart_item) => {
+        if (cart_item.item.id == dish.id) {
+          setIsInCart({
+            itemId: dish.id,
+            itemTotal: cart_item.item_total,
+            qty: cart_item.qty,
+            is_customisable: cart_item.item.is_customisable,
+          });
+        }
+        return cart_item;
+      });
+      setCartReloading(true);
+    }
+  };
+
+  useEffect(() => {
+    if (serverCart || !dishToCart) {
+      handleIsInCart();
+    }
+  }, [serverCart, dishToCart]);
+
+  const handleAddDish = () => {
+    if (cartRestrauntId && cartRestrauntId !== restrauntId) {
+      setshowAlert(true);
+      return;
+    }
+
+    setCartRestrauntId(restrauntId);
+
+    if (isInCart == null) {
+      const isAdded = addItemToCart(dish.id, restrauntId);
+      if (isAdded) {
+        setIsInCart({ ...isInCart, qty: 1 });
+        setCartReloading(true);
+      }
+    }
+  };
+
+  const addQty = () => {
+    const isAdded = addItemToCart(dish.id, restrauntId);
+    if (isAdded) {
+      setIsInCart({ ...isInCart, qty: parseInt(isInCart.qty) + 1 });
+      setCartReloading(true);
+    }
+  };
+
+  const removeQty = () => {
+    const isRemoved = removeItemToCart(dish.id,restrauntId);
+    if (isRemoved) {
+      setIsInCart({ ...isInCart, qty: parseInt(isInCart.qty) - 1 });
+      setCartReloading(true);
+     
+    }
+  };
 
   const handleCustomisableDish = () => {
     if (cutomizeRef !== null) {
@@ -37,29 +116,76 @@ const DishCard = ({
     }
 
     if (cart.restrauntId !== undefined && cart.restrauntId !== restrauntId) {
-      setshowAlert(true)
-      return
-    }
-
-   
-  };
-
-  const updateItem = () => {
-    if (cart.cartItems == null) {
+      setshowAlert(true);
       return;
     }
-    const dishInCart = cart.cartItems.filter(({ itemId }) => itemId == dish.id);
-
-    setIsInCart(dishInCart[0]);
   };
 
-  const handleAddDish = () => {
-    if (cart.restrauntId !== undefined && cart.restrauntId !== restrauntId) {
-      setshowAlert(true)
-      return
-    }
+  const repeatCustomisedOrder = () => {
+    setIsInCart({ ...isInCart, qty: parseInt(isInCart.qty) + 1 });
 
+    updateQty(0);
+    addMoreCustomiseRef.current.close();
+    setCartReloading(true);
+  };
+
+  const chooseAgainCustomisedOrder = () => {
+    setIWillChoose(true);
+
+    addMoreCustomiseRef.current.close();
+    cutomizeRef.current.open();
+  };
+
+  const updateItem = async () => {
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      };
+     
+      const item_data = { restrauntId: restrauntId, itemId: dish.id };
+
+      const res = await axios.post(
+        `${API_URL}/restraunt/cart/item/`,
+        item_data,
+        config
+      );
+      const data = res.data.data;
+ 
+      if(res.data.message == "No Cart Item Found"){
+        setIsInCart(null)
+        return
+      }
+      setIsInCart({
+        ...isInCart,
+        itemTotal: data.item_total,
+        qty: data.qty,
+      });
+
+      const currentServerCart = serverCart
+      currentServerCart = currentServerCart.cart.map(item=>{
+        if (cart_item.item.id == dish.id) {
+          item.qty = data.qty
+          item.itemTotal = data.item_total
+        }
+        return item
+      })
+      setServerCart(currentServerCart)
+
+    } catch (err) {
+    
+    }
+  };
+
+
+  const handleAddCustomisedDish = () => {
+    if (cartRestrauntId !== null && cartRestrauntId !== restrauntId) {
+      setshowAlert(true);
+      return;
+    }
     const currentCart = cart;
+    setCartRestrauntId(restrauntId);
     currentCart.restrauntId = restrauntId;
     currentCart.restrauntName = restrauntName;
 
@@ -70,110 +196,82 @@ const DishCard = ({
     const currentItem = currentCart.cartItems.filter(
       ({ itemId }) => itemId == dish.id
     );
-    if (currentItem.length == 0) {
-      currentCart.cartItems = [
-        ...currentCart.cartItems,
-        {
-          itemId: dish.id,
-          qty: 1,
-          is_customisable: false,
-          itemTotal: dish.item_price,
-        },
-      ];
-      updateItem();
-    }
 
-    setCart(currentCart);
-    setCartReloading(true);
-  };
-
-  const updateQty = (remove) => {
-    const currentCart = cart;
-
-    const currentItems = currentCart.cartItems.map((item) => {
-      if (item.itemId == isInCart.itemId) {
-        if (remove == 0) {
-          return {
-            ...item,
-            qty: parseInt(item.qty) + 1,
-            itemTotal: (parseInt(item.qty) + 1) * dish.item_price,
-          };
-        } else {
-          return {
-            ...item,
-            qty: parseInt(item.qty) - 1,
-            itemTotal: (parseInt(item.qty) - 1) * dish.item_price,
-          };
-        }
-      } else {
-        return item;
-      }
-    });
-
-    currentCart.cartItems = currentItems;
-
-    setCart(currentCart);
-  };
-
-  const addQty = () => {
-    setIsInCart({ ...isInCart, qty: parseInt(isInCart.qty) + 1 });
-
-    updateQty(0);
-    setCartReloading(true);
-  };
-
-  const removeQty = () => {
-    setIsInCart({ ...isInCart, qty: parseInt(isInCart.qty) - 1 });
-
-    if (parseInt(isInCart.qty) - 1 == 0) {
-      const currentCart = cart;
-      currentCart.cartItems = currentCart.cartItems.filter(
-        ({ itemId }) => itemId !== dish.id
-      );
-      setCart(currentCart);
-      setIsInCart(null);
-      setCartReloading(true);
+    if (currentItem.length > 0 && iWillChoose == false) {
+      addMoreCustomiseRef.current.open();
       return;
     }
 
-    updateQty(1);
-    setCartReloading(true);
-  };
-
-  const handleAddCustomisedDish = () => {
-    const currentCart = cart;
-    currentCart.restrauntId = restrauntId;
-
-    if (currentCart.cartItems == null) {
-      currentCart.cartItems = [];
+    if (currentItem.length > 0 && iWillChoose == true) {
+      setIsInCart({ ...isInCart, qty: parseInt(isInCart.qty) + 1 });
+      // updateQty(0);
+      cutomizeRef.current.close();
+      return;
     }
 
-    const currentItem = currentCart.cartItems.filter(
-      ({ itemId }) => itemId == dish.id
-    );
     if (currentItem.length == 0) {
       currentCart.cartItems = [
-        ...currentCart.cartItems,
         {
           itemId: dish.id,
           qty: 1,
           is_customisable: true,
           itemTotal: dish.item_price,
+          options: [{ item: [...customisedItems], uniqueId: uniqueId }],
         },
+        ...currentCart.cartItems,
       ];
+      setCart(currentCart);
+
       updateItem();
+
       cutomizeRef.current.close();
     }
+    setCartReloading(true);
+  };
+
+  const updateCustomisedDishSelection = (is_checked, item_id, add_item_id) => {
+    var currentCustomisedItem = customisedItems;
+    currentCustomisedItem = currentCustomisedItem.map((item) => {
+      item.custom_dish_head = item.custom_dish_head.map((add_item) => {
+        if (item.id == item_id && add_item.id == add_item_id) {
+          if (item.current_selected == null) {
+            item.current_selected = 0;
+          }
+
+          add_item.select = false;
+          if (is_checked == true) {
+            add_item.select = true;
+            item.current_selected = parseInt(item.current_selected) + 1;
+            if (item.current_selected > item.max_selection) {
+              item.current_selected = parseInt(item.current_selected) - 1;
+              add_item.select = false;
+            }
+          } else {
+            item.current_selected = parseInt(item.current_selected) - 1;
+          }
+        }
+        return add_item;
+      });
+      return item;
+    });
+
+    setCustomisedItems(currentCustomisedItem);
   };
 
   useEffect(() => {
-    setCartReloading(false);
-    updateItem();
+    if (cartReloading) {
+      updateItem();
+      setCartReloading(false);
+    }
   }, [cartReloading]);
 
   useEffect(() => {
-    updateItem();
-  }, []);
+    if (dish.is_customisable) {
+      const dishes = dish.dish;
+      setUniqueId("id" + Math.random().toString(16).slice(2));
+      setCustomisedItems(dishes);
+    }
+  }, [dish, iWillChoose]);
 
   return (
     <View>
@@ -309,6 +407,7 @@ const DishCard = ({
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <TouchableOpacity
                       activeOpacity={0.8}
+                      disabled={dishToCart}
                       onPress={removeQty}
                       style={{
                         backgroundColor: "#FF6666",
@@ -328,11 +427,18 @@ const DishCard = ({
                         borderRadius: 5,
                       }}
                     >
-                      {isInCart.qty}
+                      {(dishToCart && isInCart.itemId == dish.id) ? (
+                        <ActivityIndicator size={14} color="#FF6666" />
+                      ) : (
+                        isInCart.qty
+                      )}
                     </Text>
                     <TouchableOpacity
                       activeOpacity={0.8}
-                      onPress={addQty}
+                      onPress={
+                        dish.is_customisable ? handleAddCustomisedDish : addQty
+                      }
+                      disabled={dishToCart}
                       style={{
                         backgroundColor: "#FF6666",
                         paddingHorizontal: 14,
@@ -354,6 +460,7 @@ const DishCard = ({
         ref={cutomizeRef}
         height={Dimensions.get("window").height - 100}
         openDuration={250}
+        onClose={() => setIWillChoose(false)}
         customStyles={{
           container: {
             paddingHorizontal: 10,
@@ -375,11 +482,12 @@ const DishCard = ({
           Select Options
         </Text>
         <ScrollView>
-          {dish.dish.map((item, index) => {
+          {customisedItems.map((item, index) => {
             return (
               <View key={index} style={{ marginTop: index == 0 ? 0 : 20 }}>
                 <Text style={{ fontSize: 16, fontWeight: "700" }}>
-                  {item.name} (0 / {item.max_selection})
+                  {item.name} ({item.current_selected || 0} /{" "}
+                  {item.max_selection})
                 </Text>
                 {item.custom_dish_head.map((add_item) => {
                   return (
@@ -398,13 +506,34 @@ const DishCard = ({
                       >
                         <BouncyCheckbox
                           size={22}
-                          fillColor="#FF6666"
-                          unfillColor="#FFFFFF"
+                          fillColor={
+                            item.current_selected == item.max_selection &&
+                            !add_item.select
+                              ? "#cecece"
+                              : "#FF6666"
+                          }
+                          unfillColor={
+                            item.current_selected == item.max_selection &&
+                            !add_item.select
+                              ? "#cecece"
+                              : "#FFFFFF"
+                          }
                           text={add_item.name}
                           iconStyle={{ borderColor: "red" }}
                           innerIconStyle={{ borderWidth: 2 }}
                           disableText={true}
-                          onPress={(isChecked) => {}}
+                          disabled={
+                            item.current_selected == item.max_selection &&
+                            !add_item.select
+                          }
+                          isChecked={add_item.select}
+                          onPress={(isChecked) => {
+                            updateCustomisedDishSelection(
+                              isChecked,
+                              item.id,
+                              add_item.id
+                            );
+                          }}
                         />
                         <Text style={{ marginLeft: 10 }}>{add_item.name}</Text>
                       </View>
@@ -435,30 +564,105 @@ const DishCard = ({
         </TouchableOpacity>
       </RBSheet>
 
+      <RBSheet
+        ref={addMoreCustomiseRef}
+        height={200}
+        openDuration={250}
+        customStyles={{
+          container: {
+            paddingHorizontal: 10,
+            paddingTop: 10,
+            borderTopLeftRadius: 30,
+            borderTopRightRadius: 30,
+          },
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: "700",
+            textAlign: "center",
+            marginTop: 10,
+            marginBottom: 20,
+            flex: 1,
+          }}
+        >
+          Are you want to repeat?
+        </Text>
+
+        <View
+          style={{
+            flexDirection: "row",
+            paddingHorizontal: 10,
+            marginBottom: 10,
+          }}
+        >
+          <TouchableOpacity
+            onPress={chooseAgainCustomisedOrder}
+            activeOpacity={0.7}
+            style={{
+              backgroundColor: "#FF6666",
+              paddingVertical: 10,
+              marginHorizontal: 10,
+              marginBottom: 10,
+              borderRadius: 10,
+              flex: 1,
+            }}
+          >
+            <Text
+              style={{ fontSize: 14, color: "#ffffff", textAlign: "center" }}
+            >
+              I'll Choose
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={repeatCustomisedOrder}
+            activeOpacity={0.7}
+            style={{
+              backgroundColor: "#FF6666",
+              paddingVertical: 10,
+              marginHorizontal: 10,
+              marginBottom: 10,
+              borderRadius: 10,
+              flex: 1,
+            }}
+          >
+            <Text
+              style={{ fontSize: 14, color: "#ffffff", textAlign: "center" }}
+            >
+              Repeat
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </RBSheet>
+
       <AwesomeAlert
-          show={showAlert}
-          showProgress={false}
-          title="Replace cart item?"
-          message={`Your cart contains dishes from ${cart.restrauntName}. Do you want to discard the selection and add dishes from ${restrauntName}. `}
-          closeOnTouchOutside={true}
-          closeOnHardwareBackPress={false}
-          showCancelButton={true}
-          showConfirmButton={true}
-          cancelText="No"
-      
-          confirmText="Replace"
-          confirmButtonColor="#FF6666"
-          onCancelPressed={() => {
-            setshowAlert(false)
-          }}
-          onConfirmPressed={() => {
-            const currentCart = {};
-            currentCart.restrauntId = restrauntId;
-            currentCart.restrauntName = restrauntName;
-            setCart(currentCart)
-            setshowAlert(false)
-          }}
-        />
+        show={showAlert}
+        showProgress={false}
+        title="Replace cart item?"
+        message={`Your cart contains dishes from ${cart.restrauntName}. Do you want to discard the selection and add dishes from ${restrauntName}. `}
+        closeOnTouchOutside={true}
+        closeOnHardwareBackPress={false}
+        showCancelButton={true}
+        showConfirmButton={true}
+        cancelText="No"
+        confirmText="Replace"
+        confirmButtonColor="#FF6666"
+        onCancelPressed={() => {
+          setshowAlert(false);
+        }}
+        onConfirmPressed={() => {
+          const currentCart = {};
+          currentCart.restrauntId = restrauntId;
+          currentCart.restrauntName = restrauntName;
+          setCartRestrauntId(restrauntId);
+
+          setCart(currentCart);
+          deleteCart();
+          setshowAlert(false);
+        }}
+      />
     </View>
   );
 };
