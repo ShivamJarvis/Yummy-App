@@ -25,15 +25,14 @@ import { authContext } from "../../contexts/AuthContext";
 
 const RestrauntDetails = ({ route, navigation }) => {
   let today = new Date();
-  const {setCustomisedItems,loadCart} = authContext()
   const [refreshing, setRefreshing] = useState(false);
   let currentTime = today.toLocaleTimeString("en-SE");
   const { id } = route.params;
   const [isLoading, setIsLoading] = useState(true);
   const [cartReloading, setCartReloading] = useState(true);
-  const [resetCustomisableDishes, setResetCustomisableDishes] = useState(false);
   const [restraunt, setRestraunt] = useState({});
   const [isRestrauntOpen, setRestrauntOpen] = useState(true);
+
 
 
   const wait = (timeout) => {
@@ -49,9 +48,6 @@ const RestrauntDetails = ({ route, navigation }) => {
 
   const [activeSections, setActiveSections] = useState([]);
 
-  useEffect(()=>{
-    loadCart()
-  },[])
 
   useEffect(() => {
     setIsLoading(true);
@@ -239,7 +235,7 @@ const RestrauntDetails = ({ route, navigation }) => {
             }}
             renderContent={({ menu }) => {
               return menu.map((dish, index) => {
-                return <DishCard  key={dish.id} restrauntName={restraunt.name} setResetCustomisableDishes={setResetCustomisableDishes}  restrauntId={id} cartReloading={cartReloading} setCartReloading = {setCartReloading} dish={dish} isRestrauntOpen={isRestrauntOpen} />;
+                return <DishCard  key={dish.id} restrauntName={restraunt.name} restrauntId={id} cartReloading={cartReloading} setCartReloading = {setCartReloading} dish={dish} isRestrauntOpen={isRestrauntOpen}  />;
               });
             }}
             onChange={(active) => setActiveSections(active)}

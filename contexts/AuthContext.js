@@ -22,10 +22,10 @@ export const AuthProvider = ({ children }) => {
   const [refreshToken, setRefreshToken] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [cart, setCart] = useState({});
-  const [serverCart, setServerCart] = useState({});
   const [cartRestrauntId, setCartRestrauntId] = useState(null);
-  const [dishToCart, setDishToCart] = useState(null);
-  const [isCartInitialised, setCartInitialised] = useState(false);
+  const [dishToCart, setDishToCart] = useState({ itemId: null, status: false });
+  const [customisedIsNotRemoved, setCustomisedIsNotRemoved] =
+    useState(false);
 
   useEffect(() => {
     if (location !== null) {
@@ -144,12 +144,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const deleteCart = async () => {
-    try {
-      await axios.delete(`${API_URL}/restraunt/cart/`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-    } catch (err) {}
+  const logoutCustomer = () => {
+    setIsLoading(true);
+    AsyncStorage.removeItem("accessToken");
+    AsyncStorage.removeItem("refreshToken");
+    setIsAuthenticated(false);
+    setIsLoading(false);
+    setUser(null);
   };
 
   const loadCart = async () => {
@@ -169,7 +170,6 @@ export const AuthProvider = ({ children }) => {
         } else {
           setCartRestrauntId(res.data.data.restraunt);
         }
-        setServerCart(res.data.data);
       }
     } catch (err) {
    
@@ -180,16 +180,21 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (accessToken !== null) {
       loadCart();
-      // axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-
     }
   }, [accessToken]);
 
-  const addItemToCart = async (item_id,restrauntId) => {
-    
-    
-    setDishToCart(true)
+
+  const deleteCart = async () => {
     try {
+      await axios.delete(`${API_URL}/restraunt/cart/`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch (err) {}
+  };
+
+  const addItemToCart = async (item_id, restrauntId) => {
+    try {
+      setDishToCart({ itemId: item_id, status: true });
       const config = {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -205,19 +210,19 @@ export const AuthProvider = ({ children }) => {
       );
 
       if (res.data.message == "Item Added to Cart") {
-        setDishToCart(false)
+        setDishToCart({ itemId: item_id, status: false });
         return true;
       }
-      setDishToCart(false)
+      setDishToCart({ itemId: item_id, status: false });
       return false;
     } catch (err) {
-      setDishToCart(false)
+      setDishToCart({ itemId: item_id, status: false });
       return false;
     }
   };
 
-  const removeItemToCart = async (item_id,restrauntId) => {
-    setDishToCart(true)
+  const removeItemToCart = async (item_id, restrauntId) => {
+    setDishToCart({ itemId: item_id, status: true });
     try {
       const res = await axios.post(
         `${API_URL}/restraunt/cart/remove-item/`,
@@ -229,27 +234,86 @@ export const AuthProvider = ({ children }) => {
       );
 
       if (res.data.message == "Item Removed to Cart") {
-        setDishToCart(false)
+        setDishToCart({ itemId: item_id, status: false });
         return true;
       }
-      setDishToCart(false)
+      setDishToCart({ itemId: item_id, status: false });
       return false;
     } catch (err) {
-      setDishToCart(false)
+      setDishToCart({ itemId: item_id, status: false });
       return false;
     }
-
   };
 
-  const logoutCustomer = () => {
-    setIsLoading(true);
-    AsyncStorage.removeItem("accessToken");
-    AsyncStorage.removeItem("refreshToken");
-    setIsAuthenticated(false);
-    setIsLoading(false);
-    setUser(null);
+
+
+  const addCustomisedItemToCart = async (
+    item_id,
+    restrauntId,
+    customisedOptions,
+    isRepeated
+  ) => {
+    setDishToCart({ itemId: item_id, status: true });
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      };
+      const res = await axios.post(
+        `${API_URL}/restraunt/cart/add-customised-item/`,
+        {
+          restrauntId: restrauntId,
+          itemId: item_id,
+          customisedOptions: customisedOptions,
+          isRepeated: isRepeated,
+        },
+        config
+      );
+
+      if (res.data.message == "Customised Item Added to Cart") {
+        setDishToCart({ itemId: item_id, status: false });
+        return true;
+      }
+      setDishToCart({ itemId: item_id, status: false });
+      return false;
+    } catch (err) {
+      setDishToCart({ itemId: item_id, status: false });
+      return false;
+    }
   };
 
+  const removeCustomisedItemToCart = async (item_id, restrauntId) => {
+    setCustomisedIsNotRemoved(false)
+    setDishToCart({ itemId: item_id, status: true });
+    try {
+      const res = await axios.post(
+        `${API_URL}/restraunt/cart/remove-customised-item/`,
+        {
+          restrauntId: restrauntId,
+          itemId: item_id,
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      if(res.data.message == "Remove of multi item not possible"){
+        setCustomisedIsNotRemoved(true)
+        setDishToCart({ itemId: item_id, status: false });
+        return true
+      }
+
+      if (res.data.message == "Item Removed to Cart") {
+        return true;
+      }
+      setDishToCart({ itemId: item_id, status: false });
+      return false;
+    } catch (err) {
+      setDishToCart({ itemId: item_id, status: false });
+      return false;
+    }
+  };
+
+ 
   const values = {
     isLoading,
     setIsLoading,
@@ -281,12 +345,17 @@ export const AuthProvider = ({ children }) => {
 
     cartRestrauntId,
     setCartRestrauntId,
+
     addItemToCart,
     removeItemToCart,
-    setServerCart,
-    serverCart,
-    loadCart,
+
+    addCustomisedItemToCart,
+    removeCustomisedItemToCart,
+
+    
     dishToCart,
+    customisedIsNotRemoved,
+    setCustomisedIsNotRemoved,
   };
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;

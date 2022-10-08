@@ -17,6 +17,7 @@ import { authContext } from "../../contexts/AuthContext";
 import AwesomeAlert from "react-native-awesome-alerts";
 import axios from "axios";
 import { API_URL } from "@env";
+import VegNonVegSymbol from "./VegNonVegSymbol";
 
 const DishCard = ({
   dish,
@@ -25,20 +26,22 @@ const DishCard = ({
   cartReloading,
   setCartReloading,
   restrauntName,
+  
+
 }) => {
   let today = new Date();
   const {
-    cart,
-    setCart,
     deleteCart,
     cartRestrauntId,
     setCartRestrauntId,
     addItemToCart,
     removeItemToCart,
-    serverCart,
-    setServerCart,
     dishToCart,
-    accessToken
+    accessToken,
+    addCustomisedItemToCart,
+    removeCustomisedItemToCart,
+    customisedIsNotRemoved,
+    setCustomisedIsNotRemoved
   } = authContext();
   const [customisedItems, setCustomisedItems] = useState([]);
   const cutomizeRef = useRef();
@@ -46,35 +49,9 @@ const DishCard = ({
   const [isInCart, setIsInCart] = useState(null);
 
   const [showAlert, setshowAlert] = useState(false);
-  const [iWillChoose, setIWillChoose] = useState(false);
-  const [uniqueId, setUniqueId] = useState(null);
+  const [iWillChoose, setIWillChoose] = useState(null);
   let currentTime = today.toLocaleTimeString("en-SE");
 
-  const handleIsInCart = () => {
-    if (serverCart == null) {
-      return;
-    }
-    if (serverCart.cart) {
-      serverCart?.cart.map((cart_item) => {
-        if (cart_item.item.id == dish.id) {
-          setIsInCart({
-            itemId: dish.id,
-            itemTotal: cart_item.item_total,
-            qty: cart_item.qty,
-            is_customisable: cart_item.item.is_customisable,
-          });
-        }
-        return cart_item;
-      });
-      setCartReloading(true);
-    }
-  };
-
-  useEffect(() => {
-    if (serverCart || !dishToCart) {
-      handleIsInCart();
-    }
-  }, [serverCart, dishToCart]);
 
   const handleAddDish = () => {
     if (cartRestrauntId && cartRestrauntId !== restrauntId) {
@@ -88,6 +65,7 @@ const DishCard = ({
       const isAdded = addItemToCart(dish.id, restrauntId);
       if (isAdded) {
         setIsInCart({ ...isInCart, qty: 1 });
+     
         setCartReloading(true);
       }
     }
@@ -96,7 +74,9 @@ const DishCard = ({
   const addQty = () => {
     const isAdded = addItemToCart(dish.id, restrauntId);
     if (isAdded) {
-      setIsInCart({ ...isInCart, qty: parseInt(isInCart.qty) + 1 });
+    
+    
+  
       setCartReloading(true);
     }
   };
@@ -104,56 +84,93 @@ const DishCard = ({
   const removeQty = () => {
     const isRemoved = removeItemToCart(dish.id,restrauntId);
     if (isRemoved) {
-      setIsInCart({ ...isInCart, qty: parseInt(isInCart.qty) - 1 });
+      
       setCartReloading(true);
      
     }
   };
 
-  const handleCustomisableDish = () => {
+  const openCustomisationBox = () => {
+   
     if (cutomizeRef !== null) {
       cutomizeRef.current.open();
     }
 
-    if (cart.restrauntId !== undefined && cart.restrauntId !== restrauntId) {
+    if (cartRestrauntId && cartRestrauntId !== restrauntId) {
       setshowAlert(true);
       return;
+    }
+    
+  };
+
+  const openAddCustomisationOptionsBox = () => {
+    setIWillChoose(true)
+    if (addMoreCustomiseRef !== null) {
+      addMoreCustomiseRef.current.open();
+    }
+    
+  };
+
+  const handleAddCustomisedDish = () => {
+    setCartRestrauntId(restrauntId);
+      var isAdded = addCustomisedItemToCart(dish.id, restrauntId, customisedItems, false);
+      setIWillChoose(false)
+      if (isAdded) {
+        setCartReloading(true);
+        cutomizeRef.current.close()
+      }
+  };
+
+
+  const removeCustomisedDishQty = () => {
+    const isRemoved = removeCustomisedItemToCart(dish.id,restrauntId);
+    if (isRemoved) {
+
+      if(customisedIsNotRemoved){
+        return
+      }
+
+      
+      setCartReloading(true);
+     
     }
   };
 
   const repeatCustomisedOrder = () => {
-    setIsInCart({ ...isInCart, qty: parseInt(isInCart.qty) + 1 });
-
-    updateQty(0);
     addMoreCustomiseRef.current.close();
-    setCartReloading(true);
+    var isAdded = addCustomisedItemToCart(dish.id, restrauntId, customisedItems, true);
+    if (isAdded) {
+      setCartReloading(true);
+      cutomizeRef.current.close()
+    }
+
   };
 
   const chooseAgainCustomisedOrder = () => {
-    setIWillChoose(true);
-
     addMoreCustomiseRef.current.close();
     cutomizeRef.current.open();
   };
 
   const updateItem = async () => {
+ 
     try {
-      const config = {
-        headers: {
+     
+        const config = {
+          headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       };
-     
-      const item_data = { restrauntId: restrauntId, itemId: dish.id };
 
-      const res = await axios.post(
-        `${API_URL}/restraunt/cart/item/`,
+        
+      const item_data = { restrauntId: restrauntId, itemId: dish.id };
+        const res = await axios.post(
+          `${API_URL}/restraunt/cart/item/`,
         item_data,
         config
-      );
-      const data = res.data.data;
+        );
+        const data = res.data.data;
  
-      if(res.data.message == "No Cart Item Found"){
+        if(res.data.message == "No Cart Item Found"){
         setIsInCart(null)
         return
       }
@@ -162,71 +179,10 @@ const DishCard = ({
         itemTotal: data.item_total,
         qty: data.qty,
       });
-
-      const currentServerCart = serverCart
-      currentServerCart = currentServerCart.cart.map(item=>{
-        if (cart_item.item.id == dish.id) {
-          item.qty = data.qty
-          item.itemTotal = data.item_total
-        }
-        return item
-      })
-      setServerCart(currentServerCart)
-
+      
     } catch (err) {
     
     }
-  };
-
-
-  const handleAddCustomisedDish = () => {
-    if (cartRestrauntId !== null && cartRestrauntId !== restrauntId) {
-      setshowAlert(true);
-      return;
-    }
-    const currentCart = cart;
-    setCartRestrauntId(restrauntId);
-    currentCart.restrauntId = restrauntId;
-    currentCart.restrauntName = restrauntName;
-
-    if (currentCart.cartItems == null) {
-      currentCart.cartItems = [];
-    }
-
-    const currentItem = currentCart.cartItems.filter(
-      ({ itemId }) => itemId == dish.id
-    );
-
-    if (currentItem.length > 0 && iWillChoose == false) {
-      addMoreCustomiseRef.current.open();
-      return;
-    }
-
-    if (currentItem.length > 0 && iWillChoose == true) {
-      setIsInCart({ ...isInCart, qty: parseInt(isInCart.qty) + 1 });
-      // updateQty(0);
-      cutomizeRef.current.close();
-      return;
-    }
-
-    if (currentItem.length == 0) {
-      currentCart.cartItems = [
-        {
-          itemId: dish.id,
-          qty: 1,
-          is_customisable: true,
-          itemTotal: dish.item_price,
-          options: [{ item: [...customisedItems], uniqueId: uniqueId }],
-        },
-        ...currentCart.cartItems,
-      ];
-      setCart(currentCart);
-
-      updateItem();
-
-      cutomizeRef.current.close();
-    }
-    setCartReloading(true);
   };
 
   const updateCustomisedDishSelection = (is_checked, item_id, add_item_id) => {
@@ -260,16 +216,22 @@ const DishCard = ({
 
   useEffect(() => {
     if (cartReloading) {
+
       updateItem();
+      
       setCartReloading(false);
     }
   }, [cartReloading]);
 
+  const getCustomisationOptionsForDish = async() => {
+    const res = await axios.get(`${API_URL}/restraunt/custom-dish-head/?menu_dish=${dish.id}`)
+    const data = res.data
+    setCustomisedItems(data)
+  }
+
   useEffect(() => {
     if (dish.is_customisable) {
-      const dishes = dish.dish;
-      setUniqueId("id" + Math.random().toString(16).slice(2));
-      setCustomisedItems(dishes);
+      getCustomisationOptionsForDish()
     }
   }, [dish, iWillChoose]);
 
@@ -295,19 +257,7 @@ const DishCard = ({
         >
           <View>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              {dish.is_veg ? (
-                <MciIcon
-                  name="circle-box"
-                  style={{ color: "#059610" }}
-                  size={18}
-                />
-              ) : (
-                <MciIcon
-                  name="circle-box"
-                  style={{ color: "#a80d02" }}
-                  size={18}
-                />
-              )}
+              <VegNonVegSymbol is_veg={dish.is_veg} />
 
               {dish.is_bestseller && (
                 <View
@@ -389,7 +339,7 @@ const DishCard = ({
                     activeOpacity={0.8}
                     onPress={() => {
                       if (dish.is_customisable) {
-                        handleCustomisableDish();
+                        openCustomisationBox();
                       } else {
                         handleAddDish();
                       }
@@ -407,8 +357,8 @@ const DishCard = ({
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <TouchableOpacity
                       activeOpacity={0.8}
-                      disabled={dishToCart}
-                      onPress={removeQty}
+                      disabled={dishToCart.status}
+                      onPress={dish.is_customisable ? removeCustomisedDishQty : removeQty}
                       style={{
                         backgroundColor: "#FF6666",
                         paddingHorizontal: 14,
@@ -427,7 +377,7 @@ const DishCard = ({
                         borderRadius: 5,
                       }}
                     >
-                      {(dishToCart && isInCart.itemId == dish.id) ? (
+                      {(dishToCart.status && dishToCart.itemId == dish.id ) ? (
                         <ActivityIndicator size={14} color="#FF6666" />
                       ) : (
                         isInCart.qty
@@ -436,9 +386,9 @@ const DishCard = ({
                     <TouchableOpacity
                       activeOpacity={0.8}
                       onPress={
-                        dish.is_customisable ? handleAddCustomisedDish : addQty
+                        dish.is_customisable ? openAddCustomisationOptionsBox : addQty
                       }
-                      disabled={dishToCart}
+                      disabled={dishToCart.status}
                       style={{
                         backgroundColor: "#FF6666",
                         paddingHorizontal: 14,
@@ -460,28 +410,55 @@ const DishCard = ({
         ref={cutomizeRef}
         height={Dimensions.get("window").height - 100}
         openDuration={250}
-        onClose={() => setIWillChoose(false)}
+        
         customStyles={{
           container: {
-            paddingHorizontal: 10,
-            paddingTop: 10,
+            
+            
             borderTopLeftRadius: 30,
             borderTopRightRadius: 30,
           },
         }}
       >
+        <View style={{backgroundColor:"#f1f1f1",flex:1,width:"100%",marginBottom:10}}>
+        <View style={{marginHorizontal:10,marginTop:10}}>
+
         <Text
           style={{
-            fontSize: 18,
-            fontWeight: "700",
-            textAlign: "center",
+            fontSize: 16,
+            color:"#6b6969",
+       
+            marginTop: 10,
+         
+          
+          }}
+          >
+          {dish.item_name}
+        </Text>
+        <Text
+          style={{
+            fontSize: 22,
+            color:"#242323",
+            fontWeight:"700",
             marginTop: 10,
             marginBottom: 20,
+          
           }}
-        >
-          Select Options
+          >
+          Select options
         </Text>
-        <ScrollView>
+        
+        </View>
+
+        <View
+  style={{
+    borderBottomColor: 'black',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom:10
+  }}
+/>
+
+        <ScrollView style={{marginHorizontal:10}}>
           {customisedItems.map((item, index) => {
             return (
               <View key={index} style={{ marginTop: index == 0 ? 0 : 20 }}>
@@ -489,6 +466,7 @@ const DishCard = ({
                   {item.name} ({item.current_selected || 0} /{" "}
                   {item.max_selection})
                 </Text>
+                <View style={{  backgroundColor:"#ffffff", borderRadius:20,padding:10, marginTop:10 }}>
                 {item.custom_dish_head.map((add_item) => {
                   return (
                     <View
@@ -498,14 +476,23 @@ const DishCard = ({
                         alignItems: "center",
                         marginTop: 10,
                         justifyContent: "space-between",
-                        paddingHorizontal: 10,
+                        paddingHorizontal: 8,
+                        marginBottom:10
                       }}
                     >
                       <View
                         style={{ flexDirection: "row", alignItems: "center" }}
                       >
-                        <BouncyCheckbox
-                          size={22}
+                 
+                        <VegNonVegSymbol is_veg={dish.is_veg} />
+            
+                        <Text style={{ marginLeft: 10 }}>{add_item.name}</Text>
+                      </View>
+                      <View style={{flexDirection:"row"}}>
+                      <Text style={{ fontSize: 16,marginRight:10 }}>₹ {add_item.price}</Text>
+                      <BouncyCheckbox
+                      
+                          size={24}
                           fillColor={
                             item.current_selected == item.max_selection &&
                             !add_item.select
@@ -520,6 +507,7 @@ const DishCard = ({
                           }
                           text={add_item.name}
                           iconStyle={{ borderColor: "red" }}
+                          
                           innerIconStyle={{ borderWidth: 2 }}
                           disableText={true}
                           disabled={
@@ -535,18 +523,16 @@ const DishCard = ({
                             );
                           }}
                         />
-                        <Text style={{ marginLeft: 10 }}>{add_item.name}</Text>
-                      </View>
-
-                      <Text style={{ fontSize: 16 }}>₹ {add_item.price}</Text>
+                        </View>
                     </View>
                   );
                 })}
+                </View>
               </View>
             );
           })}
         </ScrollView>
-
+        </View>
         <TouchableOpacity
           activeOpacity={0.7}
           style={{
@@ -566,29 +552,48 @@ const DishCard = ({
 
       <RBSheet
         ref={addMoreCustomiseRef}
-        height={200}
+        height={250}
         openDuration={250}
         customStyles={{
           container: {
-            paddingHorizontal: 10,
-            paddingTop: 10,
+            
+            
             borderTopLeftRadius: 30,
             borderTopRightRadius: 30,
+            
           },
         }}
       >
+        <View style={{backgroundColor:"#f1f1f1",flex:1,width:"100%",marginBottom:10}}>
+        <View style={{marginHorizontal:20,flex:1,marginTop:10}}>
+
         <Text
           style={{
-            fontSize: 18,
-            fontWeight: "700",
-            textAlign: "center",
+            fontSize: 16,
+            color:"#6b6969",
+       
+            marginTop: 10,
+         
+          
+          }}
+          >
+          {dish.item_name}
+        </Text>
+        <Text
+          style={{
+            fontSize: 22,
+            color:"#242323",
+            fontWeight:"700",
             marginTop: 10,
             marginBottom: 20,
-            flex: 1,
+          
           }}
-        >
-          Are you want to repeat?
+          >
+          Repeat Previous Customisation?
         </Text>
+        </View>
+
+        </View>
 
         <View
           style={{
@@ -601,7 +606,9 @@ const DishCard = ({
             onPress={chooseAgainCustomisedOrder}
             activeOpacity={0.7}
             style={{
-              backgroundColor: "#FF6666",
+              backgroundColor: "#FFFFFF",
+              borderColor: "#FF6666",
+              borderWidth:1,
               paddingVertical: 10,
               marginHorizontal: 10,
               marginBottom: 10,
@@ -610,7 +617,7 @@ const DishCard = ({
             }}
           >
             <Text
-              style={{ fontSize: 14, color: "#ffffff", textAlign: "center" }}
+              style={{ fontSize: 17,fontWeight:"700", color: "#FF6666", textAlign: "center" }}
             >
               I'll Choose
             </Text>
@@ -629,23 +636,32 @@ const DishCard = ({
             }}
           >
             <Text
-              style={{ fontSize: 14, color: "#ffffff", textAlign: "center" }}
+              style={{ fontSize: 17,fontWeight:"700", color: "#ffffff", textAlign: "center" }}
             >
               Repeat
             </Text>
           </TouchableOpacity>
         </View>
+      
+
       </RBSheet>
 
       <AwesomeAlert
         show={showAlert}
         showProgress={false}
         title="Replace cart item?"
-        message={`Your cart contains dishes from ${cart.restrauntName}. Do you want to discard the selection and add dishes from ${restrauntName}. `}
-        closeOnTouchOutside={true}
+        message={`Your cart contains dishes from another restraunt. Do you want to discard the selection and add dishes from ${restrauntName}. `}
+        closeOnTouchOutside={false}
         closeOnHardwareBackPress={false}
         showCancelButton={true}
         showConfirmButton={true}
+        cancelButtonStyle={styles.cancelButtonStyle}
+        cancelButtonTextStyle={styles.cancelButtonTextStyle}
+        confirmButtonTextStyle={styles.confirmButtonTextStyle}
+        confirmButtonStyle={styles.confirmButtonStyle}
+        titleStyle={styles.titleStyle}
+        messageStyle={styles.messageStyle}        
+        contentContainerStyle={styles.contentContainerStyle}
         cancelText="No"
         confirmText="Replace"
         confirmButtonColor="#FF6666"
@@ -653,14 +669,39 @@ const DishCard = ({
           setshowAlert(false);
         }}
         onConfirmPressed={() => {
-          const currentCart = {};
-          currentCart.restrauntId = restrauntId;
-          currentCart.restrauntName = restrauntName;
           setCartRestrauntId(restrauntId);
-
-          setCart(currentCart);
           deleteCart();
           setshowAlert(false);
+        }}
+      />
+
+      <AwesomeAlert
+        show={customisedIsNotRemoved}
+        showProgress={false}
+        title="Remove item from cart?"
+        message={`This item has multiple customisations added. Proceed to cart to remove item?`}
+        closeOnTouchOutside={false}
+        closeOnHardwareBackPress={false}
+        showCancelButton={true}
+        showConfirmButton={true}
+        
+        cancelButtonStyle={styles.cancelButtonStyle}
+        cancelButtonTextStyle={styles.cancelButtonTextStyle}
+        confirmButtonTextStyle={styles.confirmButtonTextStyle}
+        confirmButtonStyle={styles.confirmButtonStyle}
+        titleStyle={styles.titleStyle}
+        messageStyle={styles.messageStyle}        
+        contentContainerStyle={styles.contentContainerStyle}
+
+        cancelText="No"
+        confirmText="Yes"
+        confirmButtonColor="#FF6666"
+        onCancelPressed={() => {
+          setCustomisedIsNotRemoved(false);
+        }}
+        onConfirmPressed={() => {
+          
+          setCustomisedIsNotRemoved(false);
         }}
       />
     </View>
@@ -679,4 +720,46 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 10,
   },
+
+
+  cancelButtonStyle:{
+    flex:1,
+    alignItems:"center",
+    paddingVertical:15,
+    backgroundColor:"#ffd1d1",
+    borderRadius:20
+  },
+  cancelButtonTextStyle:{
+    color:"#FF6666",
+    fontSize:16,
+    fontWeight:"bold"
+  },
+  confirmButtonTextStyle:{
+    color:"#ffffff",
+    fontSize:16,
+    fontWeight:"bold",
+   
+  },
+  confirmButtonStyle:{
+    flex:1,
+    alignItems:"center",
+    paddingVertical:15,
+    borderRadius:20
+  },
+  titleStyle:{
+    fontSize:22,
+    color:"#000000",
+    fontWeight:"bold"
+  },
+  messageStyle:{
+    fontSize:16,
+    
+  },
+  
+  contentContainerStyle:{
+    borderRadius:20,
+    
+  },
+
+
 });
