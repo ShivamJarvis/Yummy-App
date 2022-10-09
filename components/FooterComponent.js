@@ -16,20 +16,21 @@ export default FooterComponent
 const styles = StyleSheet.create({
     footerContainer:{
         paddingVertical:30,
-        paddingHorizontal:10
+        paddingHorizontal:10,
+        marginBottom:60
         
     },  
     footerTitle:{
-       fontSize:40,
+       fontSize:35,
        fontWeight:"700",
        color:"#cecece"
         
     },  
     footerSubTitle:{
-       fontSize:24,
+       fontSize:22,
        fontWeight:"600",
        color:"#cecece",
-       marginTop:20
+       marginTop:10
         
     },  
 })

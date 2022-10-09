@@ -4,12 +4,12 @@ import MainNavigation from './MainNavigation';
 import {authContext} from './../contexts/AuthContext'
 import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import LoadingComponent from '../components/LoadingComponent';
 import Toast from 'react-native-simple-toast';
 
+
 export default function AppNav() {
-  const {isAuthenticated, setLocation,setIsAuthenticated} = authContext()
+  const {isAuthenticated, setLocation,setIsAuthenticated,loginCustomer} = authContext()
 
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -29,24 +29,19 @@ export default function AppNav() {
       let location = await Location.getCurrentPositionAsync({});
       setLocation(location);
      
-      AsyncStorage.getItem('isAuthenticated').then(value=>{
-        if(value === "true"){
-          setIsAuthenticated(true)
-        }
-      }).catch(err=>{
+      // AsyncStorage.getItem('accessToken').then(value=>{
+      //   if(value === "true"){
+      //     setIsAuthenticated(true)
+      //   }
+      // }).catch(err=>{
   
-      })
+      // })
       setLoading(false)
 
+      loginCustomer()
+
     }catch(err){
-      AsyncStorage.getItem('isAuthenticated').then(value=>{
-        if(value === "true"){
-          setIsAuthenticated(true)
-        }
-      }).catch(err=>{
-  
-      })
-      setLoading(false)
+      
     }
     })();
   }, []);
@@ -59,6 +54,8 @@ export default function AppNav() {
       
       <NavigationContainer>
        {isAuthenticated ? <MainNavigation /> : <LoginNavigation />}
+
+       
         
       </NavigationContainer>
       

@@ -18,6 +18,7 @@ import AwesomeAlert from "react-native-awesome-alerts";
 import axios from "axios";
 import { API_URL } from "@env";
 import VegNonVegSymbol from "./VegNonVegSymbol";
+import {useNavigation} from '@react-navigation/native'
 
 const DishCard = ({
   dish,
@@ -26,8 +27,6 @@ const DishCard = ({
   cartReloading,
   setCartReloading,
   restrauntName,
-  
-
 }) => {
   let today = new Date();
   const {
@@ -41,8 +40,9 @@ const DishCard = ({
     addCustomisedItemToCart,
     removeCustomisedItemToCart,
     customisedIsNotRemoved,
-    setCustomisedIsNotRemoved
+    setCustomisedIsNotRemoved,
   } = authContext();
+  const navigation = useNavigation()
   const [customisedItems, setCustomisedItems] = useState([]);
   const cutomizeRef = useRef();
   const addMoreCustomiseRef = useRef();
@@ -52,8 +52,7 @@ const DishCard = ({
   const [iWillChoose, setIWillChoose] = useState(null);
   let currentTime = today.toLocaleTimeString("en-SE");
 
-
-  const handleAddDish = () => {
+  const handleAddDish = async () => {
     if (cartRestrauntId && cartRestrauntId !== restrauntId) {
       setshowAlert(true);
       return;
@@ -62,36 +61,29 @@ const DishCard = ({
     setCartRestrauntId(restrauntId);
 
     if (isInCart == null) {
-      const isAdded = addItemToCart(dish.id, restrauntId);
+      const isAdded = await addItemToCart(dish.id, restrauntId);
       if (isAdded) {
         setIsInCart({ ...isInCart, qty: 1 });
-     
         setCartReloading(true);
       }
     }
   };
 
-  const addQty = () => {
-    const isAdded = addItemToCart(dish.id, restrauntId);
+  const addQty = async () => {
+    const isAdded = await addItemToCart(dish.id, restrauntId);
     if (isAdded) {
-    
-    
-  
       setCartReloading(true);
     }
   };
 
-  const removeQty = () => {
-    const isRemoved = removeItemToCart(dish.id,restrauntId);
+  const removeQty = async () => {
+    const isRemoved = await removeItemToCart(dish.id, restrauntId);
     if (isRemoved) {
-      
       setCartReloading(true);
-     
     }
   };
 
   const openCustomisationBox = () => {
-   
     if (cutomizeRef !== null) {
       cutomizeRef.current.open();
     }
@@ -100,50 +92,53 @@ const DishCard = ({
       setshowAlert(true);
       return;
     }
-    
   };
 
   const openAddCustomisationOptionsBox = () => {
-    setIWillChoose(true)
+    setIWillChoose(true);
     if (addMoreCustomiseRef !== null) {
       addMoreCustomiseRef.current.open();
     }
-    
   };
 
-  const handleAddCustomisedDish = () => {
+  const handleAddCustomisedDish = async () => {
     setCartRestrauntId(restrauntId);
-      var isAdded = addCustomisedItemToCart(dish.id, restrauntId, customisedItems, false);
-      setIWillChoose(false)
-      if (isAdded) {
-        setCartReloading(true);
-        cutomizeRef.current.close()
-      }
-  };
-
-
-  const removeCustomisedDishQty = () => {
-    const isRemoved = removeCustomisedItemToCart(dish.id,restrauntId);
-    if (isRemoved) {
-
-      if(customisedIsNotRemoved){
-        return
-      }
-
-      
-      setCartReloading(true);
-     
-    }
-  };
-
-  const repeatCustomisedOrder = () => {
-    addMoreCustomiseRef.current.close();
-    var isAdded = addCustomisedItemToCart(dish.id, restrauntId, customisedItems, true);
+    var isAdded = await addCustomisedItemToCart(
+      dish.id,
+      restrauntId,
+      customisedItems,
+      false
+    );
+    setIWillChoose(false);
     if (isAdded) {
       setCartReloading(true);
-      cutomizeRef.current.close()
+      cutomizeRef.current.close();
     }
+  };
 
+  const removeCustomisedDishQty = async () => {
+    const isRemoved = await removeCustomisedItemToCart(dish.id, restrauntId);
+    if (isRemoved) {
+      if (customisedIsNotRemoved) {
+        return;
+      }
+
+      setCartReloading(true);
+    }
+  };
+
+  const repeatCustomisedOrder = async () => {
+    addMoreCustomiseRef.current.close();
+    var isAdded = await addCustomisedItemToCart(
+      dish.id,
+      restrauntId,
+      customisedItems,
+      true
+    );
+    if (isAdded) {
+      setCartReloading(true);
+      cutomizeRef.current.close();
+    }
   };
 
   const chooseAgainCustomisedOrder = () => {
@@ -152,37 +147,31 @@ const DishCard = ({
   };
 
   const updateItem = async () => {
- 
     try {
-     
-        const config = {
-          headers: {
+      const config = {
+        headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       };
 
-        
       const item_data = { restrauntId: restrauntId, itemId: dish.id };
-        const res = await axios.post(
-          `${API_URL}/restraunt/cart/item/`,
+      const res = await axios.post(
+        `${API_URL}/restraunt/cart/item/`,
         item_data,
         config
-        );
-        const data = res.data.data;
- 
-        if(res.data.message == "No Cart Item Found"){
-        setIsInCart(null)
-        return
+      );
+      const data = res.data.data;
+
+      if (res.data.message == "No Cart Item Found") {
+        setIsInCart(null);
+        return;
       }
       setIsInCart({
-        ...isInCart,
+     
         itemTotal: data.item_total,
         qty: data.qty,
       });
-      
-    } catch (err) {
-    
-    }
+    } catch (err) {}
   };
 
   const updateCustomisedDishSelection = (is_checked, item_id, add_item_id) => {
@@ -216,22 +205,23 @@ const DishCard = ({
 
   useEffect(() => {
     if (cartReloading) {
-
       updateItem();
-      
+
       setCartReloading(false);
     }
   }, [cartReloading]);
 
-  const getCustomisationOptionsForDish = async() => {
-    const res = await axios.get(`${API_URL}/restraunt/custom-dish-head/?menu_dish=${dish.id}`)
-    const data = res.data
-    setCustomisedItems(data)
-  }
+  const getCustomisationOptionsForDish = async () => {
+    const res = await axios.get(
+      `${API_URL}/restraunt/custom-dish-head/?menu_dish=${dish.id}`
+    );
+    const data = res.data;
+    setCustomisedItems(data);
+  };
 
   useEffect(() => {
     if (dish.is_customisable) {
-      getCustomisationOptionsForDish()
+      getCustomisationOptionsForDish();
     }
   }, [dish, iWillChoose]);
 
@@ -358,7 +348,11 @@ const DishCard = ({
                     <TouchableOpacity
                       activeOpacity={0.8}
                       disabled={dishToCart.status}
-                      onPress={dish.is_customisable ? removeCustomisedDishQty : removeQty}
+                      onPress={
+                        dish.is_customisable
+                          ? removeCustomisedDishQty
+                          : removeQty
+                      }
                       style={{
                         backgroundColor: "#FF6666",
                         paddingHorizontal: 14,
@@ -377,7 +371,7 @@ const DishCard = ({
                         borderRadius: 5,
                       }}
                     >
-                      {(dishToCart.status && dishToCart.itemId == dish.id ) ? (
+                      {dishToCart.status && dishToCart.itemId == dish.id ? (
                         <ActivityIndicator size={14} color="#FF6666" />
                       ) : (
                         isInCart.qty
@@ -386,7 +380,9 @@ const DishCard = ({
                     <TouchableOpacity
                       activeOpacity={0.8}
                       onPress={
-                        dish.is_customisable ? openAddCustomisationOptionsBox : addQty
+                        dish.is_customisable
+                          ? openAddCustomisationOptionsBox
+                          : addQty
                       }
                       disabled={dishToCart.status}
                       style={{
@@ -410,128 +406,138 @@ const DishCard = ({
         ref={cutomizeRef}
         height={Dimensions.get("window").height - 100}
         openDuration={250}
-        
         customStyles={{
           container: {
-            
-            
             borderTopLeftRadius: 30,
             borderTopRightRadius: 30,
           },
         }}
       >
-        <View style={{backgroundColor:"#f1f1f1",flex:1,width:"100%",marginBottom:10}}>
-        <View style={{marginHorizontal:10,marginTop:10}}>
-
-        <Text
-          style={{
-            fontSize: 16,
-            color:"#6b6969",
-       
-            marginTop: 10,
-         
-          
-          }}
-          >
-          {dish.item_name}
-        </Text>
-        <Text
-          style={{
-            fontSize: 22,
-            color:"#242323",
-            fontWeight:"700",
-            marginTop: 10,
-            marginBottom: 20,
-          
-          }}
-          >
-          Select options
-        </Text>
-        
-        </View>
-
         <View
-  style={{
-    borderBottomColor: 'black',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    marginBottom:10
-  }}
-/>
+          style={{
+            backgroundColor: "#f1f1f1",
+            flex: 1,
+            width: "100%",
+            marginBottom: 10,
+          }}
+        >
+          <View style={{ marginHorizontal: 10, marginTop: 10 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                color: "#6b6969",
 
-        <ScrollView style={{marginHorizontal:10}}>
-          {customisedItems.map((item, index) => {
-            return (
-              <View key={index} style={{ marginTop: index == 0 ? 0 : 20 }}>
-                <Text style={{ fontSize: 16, fontWeight: "700" }}>
-                  {item.name} ({item.current_selected || 0} /{" "}
-                  {item.max_selection})
-                </Text>
-                <View style={{  backgroundColor:"#ffffff", borderRadius:20,padding:10, marginTop:10 }}>
-                {item.custom_dish_head.map((add_item) => {
-                  return (
-                    <View
-                      key={add_item.id}
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        marginTop: 10,
-                        justifyContent: "space-between",
-                        paddingHorizontal: 8,
-                        marginBottom:10
-                      }}
-                    >
-                      <View
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                 
-                        <VegNonVegSymbol is_veg={dish.is_veg} />
-            
-                        <Text style={{ marginLeft: 10 }}>{add_item.name}</Text>
-                      </View>
-                      <View style={{flexDirection:"row"}}>
-                      <Text style={{ fontSize: 16,marginRight:10 }}>₹ {add_item.price}</Text>
-                      <BouncyCheckbox
-                      
-                          size={24}
-                          fillColor={
-                            item.current_selected == item.max_selection &&
-                            !add_item.select
-                              ? "#cecece"
-                              : "#FF6666"
-                          }
-                          unfillColor={
-                            item.current_selected == item.max_selection &&
-                            !add_item.select
-                              ? "#cecece"
-                              : "#FFFFFF"
-                          }
-                          text={add_item.name}
-                          iconStyle={{ borderColor: "red" }}
-                          
-                          innerIconStyle={{ borderWidth: 2 }}
-                          disableText={true}
-                          disabled={
-                            item.current_selected == item.max_selection &&
-                            !add_item.select
-                          }
-                          isChecked={add_item.select}
-                          onPress={(isChecked) => {
-                            updateCustomisedDishSelection(
-                              isChecked,
-                              item.id,
-                              add_item.id
-                            );
+                marginTop: 10,
+              }}
+            >
+              {dish.item_name}
+            </Text>
+            <Text
+              style={{
+                fontSize: 22,
+                color: "#242323",
+                fontWeight: "700",
+                marginTop: 10,
+                marginBottom: 20,
+              }}
+            >
+              Select options
+            </Text>
+          </View>
+
+          <View
+            style={{
+              borderBottomColor: "black",
+              borderBottomWidth: StyleSheet.hairlineWidth,
+              marginBottom: 10,
+            }}
+          />
+
+          <ScrollView style={{ marginHorizontal: 10 }}>
+            {customisedItems.map((item, index) => {
+              return (
+                <View key={index} style={{ marginTop: index == 0 ? 0 : 20 }}>
+                  <Text style={{ fontSize: 16, fontWeight: "700" }}>
+                    {item.name} ({item.current_selected || 0} /{" "}
+                    {item.max_selection})
+                  </Text>
+                  <View
+                    style={{
+                      backgroundColor: "#ffffff",
+                      borderRadius: 20,
+                      padding: 10,
+                      marginTop: 10,
+                    }}
+                  >
+                    {item.custom_dish_head.map((add_item) => {
+                      return (
+                        <View
+                          key={add_item.id}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            marginTop: 10,
+                            justifyContent: "space-between",
+                            paddingHorizontal: 8,
+                            marginBottom: 10,
                           }}
-                        />
+                        >
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                            }}
+                          >
+                            <VegNonVegSymbol is_veg={dish.is_veg} />
+
+                            <Text style={{ marginLeft: 10 }}>
+                              {add_item.name}
+                            </Text>
+                          </View>
+                          <View style={{ flexDirection: "row" }}>
+                            <Text style={{ fontSize: 16, marginRight: 10 }}>
+                              ₹ {add_item.price}
+                            </Text>
+                            <BouncyCheckbox
+                              size={24}
+                              fillColor={
+                                item.current_selected == item.max_selection &&
+                                !add_item.select
+                                  ? "#cecece"
+                                  : "#FF6666"
+                              }
+                              unfillColor={
+                                item.current_selected == item.max_selection &&
+                                !add_item.select
+                                  ? "#cecece"
+                                  : "#FFFFFF"
+                              }
+                              text={add_item.name}
+                              iconStyle={{ borderColor: "red" }}
+                              innerIconStyle={{ borderWidth: 2 }}
+                              disableText={true}
+                              disabled={
+                                item.current_selected == item.max_selection &&
+                                !add_item.select
+                              }
+                              isChecked={add_item.select}
+                              onPress={(isChecked) => {
+                                updateCustomisedDishSelection(
+                                  isChecked,
+                                  item.id,
+                                  add_item.id
+                                );
+                              }}
+                            />
+                          </View>
                         </View>
-                    </View>
-                  );
-                })}
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
-            );
-          })}
-        </ScrollView>
+              );
+            })}
+          </ScrollView>
         </View>
         <TouchableOpacity
           activeOpacity={0.7}
@@ -552,47 +558,47 @@ const DishCard = ({
 
       <RBSheet
         ref={addMoreCustomiseRef}
-        height={250}
+        height={190}
         openDuration={250}
         customStyles={{
           container: {
-            
-            
             borderTopLeftRadius: 30,
             borderTopRightRadius: 30,
-            
           },
         }}
       >
-        <View style={{backgroundColor:"#f1f1f1",flex:1,width:"100%",marginBottom:10}}>
-        <View style={{marginHorizontal:20,flex:1,marginTop:10}}>
-
-        <Text
+        <View
           style={{
-            fontSize: 16,
-            color:"#6b6969",
-       
-            marginTop: 10,
-         
-          
+            backgroundColor: "#f1f1f1",
+            flex: 1,
+            width: "100%",
+            marginBottom: 10,
           }}
-          >
-          {dish.item_name}
-        </Text>
-        <Text
-          style={{
-            fontSize: 22,
-            color:"#242323",
-            fontWeight:"700",
-            marginTop: 10,
-            marginBottom: 20,
-          
-          }}
-          >
-          Repeat Previous Customisation?
-        </Text>
-        </View>
+        >
+          <View style={{ marginHorizontal: 20, flex: 1, marginTop: 10 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                color: "#6b6969",
 
+                marginTop: 10,
+              }}
+            >
+              {dish.item_name}
+            </Text>
+            <Text
+              style={{
+                fontSize: 20,
+                color: "#242323",
+                fontWeight: "700",
+                marginTop: 10,
+                marginBottom: 10,
+              }}
+            >
+              Repeat Previous Customisation?
+            </Text>
+
+          </View>
         </View>
 
         <View
@@ -608,7 +614,7 @@ const DishCard = ({
             style={{
               backgroundColor: "#FFFFFF",
               borderColor: "#FF6666",
-              borderWidth:1,
+              borderWidth: 1,
               paddingVertical: 10,
               marginHorizontal: 10,
               marginBottom: 10,
@@ -617,7 +623,12 @@ const DishCard = ({
             }}
           >
             <Text
-              style={{ fontSize: 17,fontWeight:"700", color: "#FF6666", textAlign: "center" }}
+              style={{
+                fontSize: 17,
+                fontWeight: "700",
+                color: "#FF6666",
+                textAlign: "center",
+              }}
             >
               I'll Choose
             </Text>
@@ -636,14 +647,17 @@ const DishCard = ({
             }}
           >
             <Text
-              style={{ fontSize: 17,fontWeight:"700", color: "#ffffff", textAlign: "center" }}
+              style={{
+                fontSize: 17,
+                fontWeight: "700",
+                color: "#ffffff",
+                textAlign: "center",
+              }}
             >
               Repeat
             </Text>
           </TouchableOpacity>
         </View>
-      
-
       </RBSheet>
 
       <AwesomeAlert
@@ -660,7 +674,7 @@ const DishCard = ({
         confirmButtonTextStyle={styles.confirmButtonTextStyle}
         confirmButtonStyle={styles.confirmButtonStyle}
         titleStyle={styles.titleStyle}
-        messageStyle={styles.messageStyle}        
+        messageStyle={styles.messageStyle}
         contentContainerStyle={styles.contentContainerStyle}
         cancelText="No"
         confirmText="Replace"
@@ -684,15 +698,13 @@ const DishCard = ({
         closeOnHardwareBackPress={false}
         showCancelButton={true}
         showConfirmButton={true}
-        
         cancelButtonStyle={styles.cancelButtonStyle}
         cancelButtonTextStyle={styles.cancelButtonTextStyle}
         confirmButtonTextStyle={styles.confirmButtonTextStyle}
         confirmButtonStyle={styles.confirmButtonStyle}
         titleStyle={styles.titleStyle}
-        messageStyle={styles.messageStyle}        
+        messageStyle={styles.messageStyle}
         contentContainerStyle={styles.contentContainerStyle}
-
         cancelText="No"
         confirmText="Yes"
         confirmButtonColor="#FF6666"
@@ -700,7 +712,7 @@ const DishCard = ({
           setCustomisedIsNotRemoved(false);
         }}
         onConfirmPressed={() => {
-          
+          navigation.navigate("CartScreen")
           setCustomisedIsNotRemoved(false);
         }}
       />
@@ -721,45 +733,40 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
+  cancelButtonStyle: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 15,
+    backgroundColor: "#ffd1d1",
+    borderRadius: 20,
+  },
+  cancelButtonTextStyle: {
+    color: "#FF6666",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  confirmButtonTextStyle: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  confirmButtonStyle: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 15,
+    borderRadius: 20,
+  },
+  titleStyle: {
+    fontSize: 19,
 
-  cancelButtonStyle:{
-    flex:1,
-    alignItems:"center",
-    paddingVertical:15,
-    backgroundColor:"#ffd1d1",
-    borderRadius:20
+    color: "#000000",
+    fontWeight: "bold",
   },
-  cancelButtonTextStyle:{
-    color:"#FF6666",
-    fontSize:16,
-    fontWeight:"bold"
-  },
-  confirmButtonTextStyle:{
-    color:"#ffffff",
-    fontSize:16,
-    fontWeight:"bold",
-   
-  },
-  confirmButtonStyle:{
-    flex:1,
-    alignItems:"center",
-    paddingVertical:15,
-    borderRadius:20
-  },
-  titleStyle:{
-    fontSize:22,
-    color:"#000000",
-    fontWeight:"bold"
-  },
-  messageStyle:{
-    fontSize:16,
-    
-  },
-  
-  contentContainerStyle:{
-    borderRadius:20,
-    
+  messageStyle: {
+    fontSize: 14,
   },
 
-
+  contentContainerStyle: {
+    borderRadius: 20,
+  },
 });

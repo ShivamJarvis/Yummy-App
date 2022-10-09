@@ -20,7 +20,7 @@ import Unorderedlist from "react-native-unordered-list";
 import axios from "axios";
 import LoadingComponent from "../../components/LoadingComponent";
 import { API_URL } from "@env";
-import { authContext } from "../../contexts/AuthContext";
+import CartFloatComponent from "../../components/CartFloatComponent";
 
 
 const RestrauntDetails = ({ route, navigation }) => {
@@ -102,9 +102,9 @@ const RestrauntDetails = ({ route, navigation }) => {
   return (
     <SafeAreaView style={{ minHeight: "100%", backgroundColor: "#ffffff" }}>
       <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        // refreshControl={
+        //   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        // }
         >
         
         <View style={styles.topImageContainer}>
@@ -300,6 +300,7 @@ const RestrauntDetails = ({ route, navigation }) => {
 
         <FooterComponent />
       </ScrollView>
+      <CartFloatComponent />
     </SafeAreaView>
   );
 };

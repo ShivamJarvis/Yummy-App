@@ -3,6 +3,7 @@ import React, { useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import {authContext} from './../../contexts/AuthContext'
+import LoadingComponent from '../../components/LoadingComponent';
 
 
 
@@ -25,11 +26,7 @@ const LoginScreen = ({navigation}) => {
     },[])
 
     if(isLoading){
-        return (
-            <View style={{flex:1,justifyContent:"center",alignItems:"center"}}>
-                <ActivityIndicator size={"large"} />
-            </View>
-        )
+        return <LoadingComponent />
     }
 
   return (

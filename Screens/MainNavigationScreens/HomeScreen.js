@@ -7,8 +7,9 @@ import {
   View,
   RefreshControl,
   StatusBar,
+  TouchableOpacity
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authContext } from "./../../contexts/AuthContext";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,6 +19,7 @@ import SmallRestrauntCard from "../../components/HomeScreenComponents/SmallRestr
 
 import BannerSlider from "../../components/HomeScreenComponents/BannerSlider";
 import FooterComponent from "../../components/FooterComponent";
+import CartFloatComponent from "../../components/CartFloatComponent";
 
 const HomeScreen = ({ navigation }) => {
   const width = Dimensions.get("window").width;
@@ -73,57 +75,7 @@ const HomeScreen = ({ navigation }) => {
     },
   ];
 
-  const restrauntsData = [
-    {
-      id: 1,
-      title: "Subway",
-      time: "31",
-      imageUrl:
-        "https://res.cloudinary.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_508,h_320,c_fill/wmd1bvw4xe7cjqwyq6xr",
-    },
-    {
-      id: 2,
-      title: "Sagar Ratna",
-      time: "47",
-      imageUrl:
-        "https://media-cdn.tripadvisor.com/media/photo-s/11/85/2a/9a/nice-dosa.jpg",
-    },
-    {
-      id: 3,
-      title: "Haldiram's",
-      time: "35",
-      imageUrl:
-        "https://fastly.4sqi.net/img/general/600x600/6085279_2CAIzhWATOzge21Fd88Vq3v0U3Qtc2H7sbFvgjvDoEc.jpg",
-    },
-    {
-      id: 4,
-      title: "Fassos - Wraps & Rolls",
-      time: "36",
-      imageUrl:
-        "https://res.cloudinary.com/swiggy/image/upload/f_auto,q_auto,fl_lossy/iztibmfdzt5fnjrveuyh",
-    },
-    {
-      id: 5,
-      title: "Burger King",
-      time: "38",
-      imageUrl:
-        "https://b.zmtcdn.com/data/pictures/0/18225860/e01ffc3a4d1f4a76e63b3250299f4793.jpg",
-    },
-    {
-      id: 6,
-      title: "Dominos",
-      time: "30",
-      imageUrl:
-        "https://media-cdn.tripadvisor.com/media/photo-s/18/a2/89/c3/dominooooooooooo.jpg",
-    },
-    {
-      id: 7,
-      title: "Wow! Momo",
-      time: "31",
-      imageUrl:
-        "https://b.zmtcdn.com/data/pictures/chains/6/18082196/906553a70e6f4f0870e28e663058af1f_featured_v2.jpg",
-    },
-  ];
+
 
   const carouselData = [
     {
@@ -244,6 +196,7 @@ const HomeScreen = ({ navigation }) => {
           <FooterComponent />
         </View>
       </ScrollView>
+      <CartFloatComponent />
     </SafeAreaView>
   );
 };

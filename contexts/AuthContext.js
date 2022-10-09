@@ -102,6 +102,7 @@ export const AuthProvider = ({ children }) => {
           setUser(data.data);
           setIsAuthenticated(true);
           setAccessToken(storageRes);
+          setIsLoading(false);
         }
       } else {
         setIsAuthenticated(false);
@@ -313,6 +314,77 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+
+  
+  const addCustomisedItemToCartFromCart = async (
+    cartItemId,
+    item_id,
+    restrauntId,
+    customisedOptions,
+    isRepeated
+  ) => {
+    setDishToCart({ itemId: item_id, status: true });
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      };
+      const res = await axios.post(
+        `${API_URL}/restraunt/cart/add-customised-item-cart/`,
+        {
+          restrauntId: restrauntId,
+          cartItemId: cartItemId,
+          customisedOptions: customisedOptions,
+          isRepeated: isRepeated,
+        },
+        config
+      );
+
+      if (res.data.message == "Customised Item Added to Cart") {
+        setDishToCart({ itemId: item_id, status: false });
+        return true;
+      }
+      setDishToCart({ itemId: item_id, status: false });
+      return false;
+    } catch (err) {
+      setDishToCart({ itemId: item_id, status: false });
+      return false;
+    }
+  };
+
+  const removeCustomisedItemToCartFromCart = async ( cartItemId,item_id, restrauntId) => {
+    setCustomisedIsNotRemoved(false)
+    setDishToCart({ itemId: item_id, status: true });
+    try {
+      const res = await axios.post(
+        `${API_URL}/restraunt/cart/remove-customised-item-cart/`,
+        {
+          cartItemId:cartItemId,
+     
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      if(res.data.message == "Remove of multi item not possible"){
+        setCustomisedIsNotRemoved(true)
+        setDishToCart({  itemId: item_id, status: false });
+        return true
+      }
+
+      if (res.data.message == "Item Removed to Cart") {
+        setDishToCart({ itemId: item_id, status: false });
+        return true;
+      }
+      setDishToCart({ itemId: item_id, status: false });
+      return false;
+    } catch (err) {
+      setDishToCart({ itemId: item_id, status: false });
+      return false;
+    }
+  };
+
+
  
   const values = {
     isLoading,
@@ -356,6 +428,8 @@ export const AuthProvider = ({ children }) => {
     dishToCart,
     customisedIsNotRemoved,
     setCustomisedIsNotRemoved,
+    addCustomisedItemToCartFromCart,
+    removeCustomisedItemToCartFromCart,
   };
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;

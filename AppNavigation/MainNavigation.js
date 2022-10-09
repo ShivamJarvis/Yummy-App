@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 import HomeStack from "../AppNavigation/Stack/HomeStack";
 import ProfileScreen from "../Screens/MainNavigationScreens/ProfileScreen";
 import FoodScreen from "../Screens/MainNavigationScreens/FoodScreen";
@@ -6,12 +6,15 @@ import DineoutScreen from "../Screens/MainNavigationScreens/DineoutScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import IoniIcons from "react-native-vector-icons/Ionicons";
 import FaIcons from "react-native-vector-icons/FontAwesome";
-import { Dimensions } from 'react-native';
+
+
 
 const Stack = createBottomTabNavigator();
 
 const MainNavigation = () => {
   return (
+    <>
+   
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
@@ -61,7 +64,7 @@ const MainNavigation = () => {
           },
           title: "Food",
         }}
-      />
+        />
       <Stack.Screen
         name="DineoutScreen"
         component={DineoutScreen}
@@ -73,7 +76,7 @@ const MainNavigation = () => {
           },
           title: "Dineout",
         }}
-      />
+        />
       <Stack.Screen
         name="ProfileScreen"
         component={ProfileScreen}
@@ -87,6 +90,8 @@ const MainNavigation = () => {
         }}
       />
     </Stack.Navigator>
+    
+    </>
   );
 };
 
