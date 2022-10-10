@@ -246,8 +246,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-
-
   const addCustomisedItemToCart = async (
     item_id,
     restrauntId,
@@ -304,6 +302,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (res.data.message == "Item Removed to Cart") {
+        setDishToCart({ itemId: item_id, status: false });
         return true;
       }
       setDishToCart({ itemId: item_id, status: false });
@@ -313,8 +312,6 @@ export const AuthProvider = ({ children }) => {
       return false;
     }
   };
-
-
   
   const addCustomisedItemToCartFromCart = async (
     cartItemId,

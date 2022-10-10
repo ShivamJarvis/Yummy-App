@@ -54,9 +54,12 @@ const CartFloatComponent = () => {
             <Text style={styles.mainText}>
               {itemCount} item | ₹{cartDetails?.cart_total}
             </Text>
+            <TouchableOpacity activeOpacity={0.8} onPress={()=>navigation.navigate("RestrauntDetailsScreen",{id:cartDetails?.restraunt?.id})}>
+
             <Text style={{ color: "#ffffff", fontSize: 13 }}>
               From {cartDetails?.restraunt?.name}
             </Text>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity

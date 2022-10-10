@@ -19,7 +19,7 @@ const HeaderComponent = () => {
     })
   },[])
   return (
-    <View>
+    <View style={{marginTop:5}}>
       <View style={styles.leftHeaderContainer}>
         <Image
           source={require("./../assets/images/header-icon.png")}

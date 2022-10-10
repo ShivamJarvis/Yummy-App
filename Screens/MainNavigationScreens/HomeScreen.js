@@ -109,7 +109,7 @@ const HomeScreen = ({ navigation }) => {
         minHeight: "100%",
         maxWidth: "100%",
         backgroundColor: "#ffffff",
-        margin: 5,
+        marginHorizontal: 5,
       }}
     >
       <StatusBar backgroundColor={"#f78783"} />

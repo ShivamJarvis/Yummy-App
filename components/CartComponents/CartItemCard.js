@@ -15,26 +15,14 @@ import axios from "axios";
 import { API_URL } from "@env";
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 
-const CartItemCard = ({
-  item,
-  restrauntId,
-  setCartReloading,
-}) => {
+const CartItemCard = ({ item, restrauntId, setCartReloading }) => {
 
-  let today = new Date();
   const {
-    cartRestrauntId,
     addItemToCart,
     removeItemToCart,
     dishToCart,
-    accessToken,
-    addCustomisedItemToCart,
-    removeCustomisedItemToCart,
-    customisedIsNotRemoved,
     addCustomisedItemToCartFromCart,
-    removeCustomisedItemToCartFromCart
-  
-    
+    removeCustomisedItemToCartFromCart,
   } = authContext();
   const [customisedItems, setCustomisedItems] = useState([]);
 
@@ -42,7 +30,6 @@ const CartItemCard = ({
   const addMoreCustomiseRef = useRef();
   const [showAlert, setshowAlert] = useState(false);
   const [iWillChoose, setIWillChoose] = useState(null);
-  let currentTime = today.toLocaleTimeString("en-SE");
 
   const addQty = async () => {
     try {
@@ -60,17 +47,6 @@ const CartItemCard = ({
         setCartReloading(true);
       }
     } catch (err) {}
-  };
-
-  const openCustomisationBox = () => {
-    if (cutomizeRef !== null) {
-      cutomizeRef.current.open();
-    }
-
-    if (cartRestrauntId && cartRestrauntId !== restrauntId) {
-      setshowAlert(true);
-      return;
-    }
   };
 
   const openAddCustomisationOptionsBox = () => {
@@ -105,7 +81,6 @@ const CartItemCard = ({
         restrauntId
       );
       if (isRemoved) {
-       
         setCartReloading(true);
       }
     } catch (err) {}
@@ -132,8 +107,6 @@ const CartItemCard = ({
     addMoreCustomiseRef.current.close();
     cutomizeRef.current.open();
   };
-
- 
 
   const updateCustomisedDishSelection = (is_checked, item_id, add_item_id) => {
     var currentCustomisedItem = customisedItems;
@@ -164,20 +137,14 @@ const CartItemCard = ({
     setCustomisedItems(currentCustomisedItem);
   };
 
-
-
   const getCustomisationOptionsForDish = async () => {
-    try{
-
-        const res = await axios.get(
-            `${API_URL}/restraunt/custom-dish-head/?menu_dish=${item.item.id}`
-            );
-            const data = res.data;
-            setCustomisedItems(data);
-           
-        }catch(err){
-       
-        }
+    try {
+      const res = await axios.get(
+        `${API_URL}/restraunt/custom-dish-head/?menu_dish=${item.item.id}`
+      );
+      const data = res.data;
+      setCustomisedItems(data);
+    } catch (err) {}
   };
 
   useEffect(() => {
@@ -195,13 +162,34 @@ const CartItemCard = ({
         justifyContent: "space-between",
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <VegNonVegSymbol is_veg={item.item.is_veg} />
-        <Text numberOfLines={1} style={styles.dishName}>
-          {item.item.item_name}
-        </Text>
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: "row", alignItems: "flex-start",justifyContent:"flex-start" }}>
+          <VegNonVegSymbol is_veg={item.item.is_veg} />
+
+          <View>
+            <Text numberOfLines={1} style={styles.dishName}>
+              {item.item.item_name}
+            </Text>
+            {item.item.is_customisable && (
+              <Text style={{ fontSize: 12, color: "#cecece",marginLeft:5,marginTop:2 }}>
+                {item.cart_item
+                  .map((customised_item) => {
+                    return customised_item.customisation_option.name;
+                  })
+                  .join(", ")}
+              </Text>
+            )}
+          </View>
+        </View>
       </View>
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flex: 1,
+        }}
+      >
         <View style={styles.addRemoveQtyContainer}>
           <TouchableOpacity
             activeOpacity={0.8}
@@ -248,7 +236,6 @@ const CartItemCard = ({
 
         <Text
           style={{
-            marginLeft: 20,
             fontWeight: "700",
             color: "#2d2d2e",
             width: 45,
