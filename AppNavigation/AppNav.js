@@ -9,7 +9,7 @@ import Toast from 'react-native-simple-toast';
 
 
 export default function AppNav() {
-  const {isAuthenticated, setLocation,setIsAuthenticated,loginCustomer} = authContext()
+  const {isAuthenticated, setLocation,loginCustomer} = authContext()
 
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -29,13 +29,7 @@ export default function AppNav() {
       let location = await Location.getCurrentPositionAsync({});
       setLocation(location);
      
-      // AsyncStorage.getItem('accessToken').then(value=>{
-      //   if(value === "true"){
-      //     setIsAuthenticated(true)
-      //   }
-      // }).catch(err=>{
-  
-      // })
+    
       setLoading(false)
 
       loginCustomer()

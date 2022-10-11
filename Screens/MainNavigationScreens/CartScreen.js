@@ -6,7 +6,7 @@ import {
   ScrollView,
   Dimensions,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Feather";
 import axios from "axios";
@@ -19,113 +19,84 @@ import SelectDropdown from "react-native-select-dropdown";
 import CartItemCard from "../../components/CartComponents/CartItemCard";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import MCIcon from "react-native-vector-icons/MaterialCommunityIcons";
+import RBSheet from "react-native-raw-bottom-sheet";
+import IonIcon from "react-native-vector-icons/Ionicons";
+
 
 const CartScreen = ({ navigation }) => {
-  const { accessToken, location, user } = authContext();
+  const { accessToken, selectedAddress, setSelectedAddress, userAddresses } =
+    authContext();
+  const newAddressSheetRef = useRef();
   const [cartDetails, setCartDetails] = useState({});
   const [cartReloading, setCartReloading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deliveryCharge, setDeliveryCharge] = useState(0.0);
   const [distance, setDistance] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
-  const [userAddresses, setUserAddresses] = useState([]);
-  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [deliveryTime, setDeliveryTime] = useState(0);
 
-  const getUserAddressDetails = async () => {
-    try {
-      const res = await axios.get(
-        `${API_URL}/user/address-details/?user=${user.id}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+  var dishPreparationTime = 0;
+  const handleDeliveryTime = (restrauntCart, calculatedDistance) => {
+    var uniqueItems = [];
+    restrauntCart?.cart?.map((item) => {
+      if (!uniqueItems.includes(item.item.id)) {
+        dishPreparationTime += item.item.preparation_time;
+        uniqueItems.push(item.item.id);
+      }
+    });
 
-      // var restrauntLocation = {
-      //   latitude: restrauntCart?.restraunt?.latitude,
-      //   longitude: restrauntCart?.restraunt?.longitude,
-      // };
+    var calculatedDeliveryTime = dishPreparationTime + calculatedDistance * 3;
 
-      // res.data.filter(item=>{
-      //   const addressLocation = {
-      //     latitude: item.latitude,
-      //     longitude: item.longitude,
-      //   };
-      //   var distance = getDistance(restrauntLocation, addressLocation) / 1000;
-      //   if (distance <= restrauntCart?.restraunt?.maximum_delivery_radius) {
-      //     return item
-      //   }
-      // })
-
-      setUserAddresses(res.data);
-
-      const customerLocation = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
-      res.data.map((data) => {
-        const addressLocation = {
-          latitude: data.latitude,
-          longitude: data.longitude,
-        };
-
-        var distance = getDistance(customerLocation, addressLocation);
-        if (distance <= 150) {
-          setSelectedAddress(data);
-        }
-      });
-    } catch (err) {}
+    setDeliveryTime(calculatedDeliveryTime);
   };
 
-  const handleDeliveryTime = (restrauntCart) => {
-    var dishPreparationTime = 0
-    restrauntCart?.cart?.map(item=>{
-      dishPreparationTime += item.item.preparation_time
-    })
-  }
-
   const handleDeliveryCharges = (restrauntCart) => {
-    if (restrauntCart == {}) {
-      return;
-    }
-    if (selectedAddress) {
-      const addressLocation = {
-        latitude: selectedAddress?.latitude,
-        longitude: selectedAddress?.longitude,
-    };
+    try {
+      if (restrauntCart == {}) {
+        return;
+      }
+      if (selectedAddress) {
+        const addressLocation = {
+          latitude: selectedAddress?.latitude,
+          longitude: selectedAddress?.longitude,
+        };
 
-    handleDeliveryTime(restrauntCart)
+        var restrauntLocation = {
+          latitude: restrauntCart?.restraunt?.latitude,
+          longitude: restrauntCart?.restraunt?.longitude,
+        };
+        var calculatedDistance = getDistance(
+          addressLocation,
+          restrauntLocation
+        );
 
+        handleDeliveryTime(restrauntCart, calculatedDistance / 1000);
 
-      var restrauntLocation = {
-        latitude: restrauntCart?.restraunt?.latitude,
-        longitude: restrauntCart?.restraunt?.longitude,
-      };
-      var distance = getDistance(addressLocation, restrauntLocation);
-
-      setDistance(distance / 1000);
-      if (distance / 1000 > 3) {
-        setDeliveryCharge((distance / 1000) * 5);
+        setDistance(calculatedDistance / 1000);
+        if (calculatedDistance / 1000 > 3) {
+          setDeliveryCharge((calculatedDistance / 1000) * 5);
+          setCartTotal(
+            Math.round(
+              (restrauntCart?.cart_total * 5) / 100 +
+                restrauntCart?.cart_total +
+                (calculatedDistance / 1000) * 5
+            )
+          );
+          return;
+        }
         setCartTotal(
           Math.round(
-            (restrauntCart?.cart_total * 5) / 100 +
-              restrauntCart?.cart_total +
-              (distance / 1000) * 5
+            (restrauntCart?.cart_total * 5) / 100 + restrauntCart?.cart_total
           )
         );
-        return
+        return;
       }
       setCartTotal(
         Math.round(
           (restrauntCart?.cart_total * 5) / 100 + restrauntCart?.cart_total
         )
       );
-      return
-    }
-    setCartTotal(
-      Math.round(
-        (restrauntCart?.cart_total * 5) / 100 + restrauntCart?.cart_total
-      )
-    );
+    } catch (err) {}
   };
 
   const getCartDetails = async () => {
@@ -145,14 +116,16 @@ const CartScreen = ({ navigation }) => {
   }, [cartReloading]);
 
   useEffect(() => {
-    if (selectedAddress) {
+    if (selectedAddress && cartDetails) {
       handleDeliveryCharges(cartDetails);
     }
-  }, [selectedAddress]);
+  }, [selectedAddress, cartDetails]);
 
-  useEffect(() => {
-    getUserAddressDetails();
-  }, [user, accessToken]);
+  const openChooseAddressSheet = () => {
+    if (newAddressSheetRef !== null) {
+      newAddressSheetRef.current.open();
+    }
+  };
 
   if (loading) {
     return <LoadingComponent />;
@@ -175,7 +148,10 @@ const CartScreen = ({ navigation }) => {
         <Text style={styles.headerTitle}>{cartDetails?.restraunt?.name}</Text>
       </View>
 
-      <ScrollView style={{ backgroundColor: "#ffffff" }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={{ backgroundColor: "#ffffff" }}
+      >
         <View style={styles.cartItemsContainer}>
           {cartDetails.cart?.map((item) => (
             <CartItemCard
@@ -267,7 +243,10 @@ const CartScreen = ({ navigation }) => {
             >
               Please add your complete address
             </Text>
-            <TouchableOpacity style={styles.buttonStyle}>
+            <TouchableOpacity
+              style={styles.buttonStyle}
+              onPress={() => newAddressSheetRef.current.open()}
+            >
               <Text style={{ ...styles.mainText, color: "#ffffff" }}>
                 Add Address Detail
               </Text>
@@ -291,6 +270,7 @@ const CartScreen = ({ navigation }) => {
               style={{ flexDirection: "row", justifyContent: "space-around" }}
             >
               <TouchableOpacity
+                onPress={() => newAddressSheetRef.current.open()}
                 style={{ ...styles.buttonStyle, flex: 1, marginHorizontal: 2 }}
               >
                 <Text
@@ -361,14 +341,21 @@ const CartScreen = ({ navigation }) => {
               }}
             >
               <View style={{ flex: 1, marginTop: 20 }}>
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: "700",
-                  }}
-                >
-                  Deliver to {selectedAddress.address_type} | 29 Mins
-                </Text>
+                {distance <= cartDetails?.restraunt?.maximum_delivery_radius ? (
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      fontWeight: "700",
+                    }}
+                  >
+                    Deliver to {selectedAddress.address_type} |{" "}
+                    {Math.ceil(deliveryTime)} Mins
+                  </Text>
+                ) : (
+                  <Text style={{ fontWeight: "700", fontSize: 18 }}>
+                    Unserviceable
+                  </Text>
+                )}
                 <Text
                   numberOfLines={1}
                   style={{ fontSize: 12, color: "#7e7e7e" }}
@@ -379,50 +366,24 @@ const CartScreen = ({ navigation }) => {
                 </Text>
               </View>
 
-              <SelectDropdown
-                data={userAddresses}
-                buttonStyle={{
-                  width: 100,
-                  height: 45,
-                  backgroundColor: "#ffffff",
-                  borderWidth: 1,
-                  borderRadius: 10,
-                  borderColor: "#cecece",
-                }}
-                selectedRowTextStyle={{ color: "#000000" }}
-                rowTextStyle={{ fontSize: 13 }}
-                renderDropdownIcon={() => <FeatherIcon name="chevron-down" />}
-                defaultValue={selectedAddress}
-                onSelect={(selectedItem, index) => {
-                  setSelectedAddress(selectedItem);
-                }}
-                buttonTextAfterSelection={(selectedItem, index) => {
-                  // text represented after item is selected
-                  // if data array is an array of objects then return selectedItem.property to render after item is selected
-
-                  if (selectedAddress.address_type == "Home") {
-                    return (
-                      <FeatherIcon name="home" color={"#f78783"} size={20} />
-                    );
-                  }
-                  if (selectedAddress.address_type == "Work") {
-                    return (
-                      <MCIcon
-                        name="office-building-marker-outline"
-                        color={"#f78783"}
-                        size={20}
-                      />
-                    );
-                  }
-
-                  return selectedItem.address_type;
-                }}
-                rowTextForSelection={(item, index) => {
-                  // text represented for each item in dropdown
-                  // if data array is an array of objects then return item.property to represent item in dropdown
-                  return item.address_type;
-                }}
-              />
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={openChooseAddressSheet}
+              >
+                <View style={styles.selectedAddressContainer}>
+                  {selectedAddress.address_type == "Home" && (
+                    <IonIcon name="home-sharp" color={"#f78783"} size={22} />
+                  )}
+                  {selectedAddress.address_type == "Work" && (
+                    <MCIcon
+                      name="office-building-marker-outline"
+                      color={"#f78783"}
+                      size={22}
+                    />
+                  )}
+                  <FeatherIcon name="chevron-down" size={20} />
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -439,13 +400,138 @@ const CartScreen = ({ navigation }) => {
             <Text style={styles.mainText}>₹{cartTotal}</Text>
           </View>
 
-          <TouchableOpacity activeOpacity={0.8} style={styles.buttonStyle}>
-            <Text style={{ ...styles.mainText, color: "#ffffff" }}>
-              Proceed to Pay
+          {distance <= cartDetails?.restraunt?.maximum_delivery_radius && (
+            <TouchableOpacity activeOpacity={0.8} style={styles.buttonStyle}>
+              <Text style={{ ...styles.mainText, color: "#ffffff" }}>
+                Proceed to Pay
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      <RBSheet
+        ref={newAddressSheetRef}
+        height={190}
+        openDuration={250}
+        customStyles={{
+          container: {
+            borderTopLeftRadius: 30,
+            borderTopRightRadius: 30,
+          },
+        }}
+      >
+        <View
+          style={{
+            backgroundColor: "#ffffff",
+            flex: 1,
+            width: "100%",
+            marginBottom: 10,
+          }}
+        >
+          <View style={{ marginHorizontal: 20, flex: 1, marginTop: 10 }}>
+            <Text
+              style={{
+                fontSize: 20,
+                color: "#242323",
+                fontWeight: "700",
+                marginTop: 10,
+                marginBottom: 10,
+              }}
+            >
+              Choose a delivery address
+            </Text>
+
+            {userAddresses &&
+              userAddresses.map((address) => {
+                return (
+                  <TouchableOpacity
+                    key={address.id}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      setSelectedAddress(address);
+                      newAddressSheetRef.current.close()
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        margin: 5,
+                      }}
+                    >
+                      {address.address_type == "Home" && (
+                        <View
+                          style={{
+                            borderWidth: 1,
+                            borderColor: "#cecece",
+                            borderRadius: 5,
+                            padding: 5,
+                            marginRight: 10,
+                          }}
+                        >
+                          <IonIcon
+                            name="home-sharp"
+                            color={"#f78783"}
+                            size={22}
+                          />
+                        </View>
+                      )}
+                      <View>
+                        <Text style={{ fontWeight: "700" }}>
+                          {address.address_type}
+                        </Text>
+                        <Text
+                          numberOfLines={1}
+                          style={{ fontSize: 12, color: "#7e7e7e" }}
+                        >
+                          {address.address_line_1}, {address.address_line_2},{" "}
+                          {address.address_line_3}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+          </View>
+        </View>
+
+        <View
+          style={{
+            flexDirection: "row",
+            paddingHorizontal: 10,
+            marginBottom: 10,
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate("AddAddressScreen");
+            }}
+            activeOpacity={0.7}
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderColor: "#FF6666",
+              borderWidth: 1,
+              paddingVertical: 10,
+              marginHorizontal: 10,
+              marginBottom: 10,
+              borderRadius: 10,
+              flex: 1,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: "700",
+                color: "#FF6666",
+                textAlign: "center",
+              }}
+            >
+              Add New Address
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </RBSheet>
     </SafeAreaView>
   );
 };
@@ -521,5 +607,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,
+  },
+  selectedAddressContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderColor: "#cecece",
   },
 });

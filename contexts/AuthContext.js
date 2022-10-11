@@ -24,8 +24,9 @@ export const AuthProvider = ({ children }) => {
   const [cart, setCart] = useState({});
   const [cartRestrauntId, setCartRestrauntId] = useState(null);
   const [dishToCart, setDishToCart] = useState({ itemId: null, status: false });
-  const [customisedIsNotRemoved, setCustomisedIsNotRemoved] =
-    useState(false);
+  const [customisedIsNotRemoved, setCustomisedIsNotRemoved] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [userAddresses, setUserAddresses] = useState([]);
 
   useEffect(() => {
     if (location !== null) {
@@ -155,7 +156,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loadCart = async () => {
-   
     try {
       const config = {
         headers: {
@@ -163,7 +163,7 @@ export const AuthProvider = ({ children }) => {
         },
       };
 
-      const res = await axios.get(`${API_URL}/restraunt/cart/load/`,config);
+      const res = await axios.get(`${API_URL}/restraunt/cart/load/`, config);
 
       if (res.data.status == "success") {
         if (res.data.data == {}) {
@@ -172,18 +172,67 @@ export const AuthProvider = ({ children }) => {
           setCartRestrauntId(res.data.data.restraunt);
         }
       }
-    } catch (err) {
-   
-    }
-   
+    } catch (err) {}
   };
+
+  const getUserAddressDetails = async () => {
+    try {
+      const res = await axios.get(
+        `${API_URL}/user/address-details/?user=${user.id}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      // var restrauntLocation = {
+      //   latitude: restrauntCart?.restraunt?.latitude,
+      //   longitude: restrauntCart?.restraunt?.longitude,
+      // };
+
+      // res.data.filter(item=>{
+      //   const addressLocation = {
+      //     latitude: item.latitude,
+      //     longitude: item.longitude,
+      //   };
+      //   var distance = getDistance(restrauntLocation, addressLocation) / 1000;
+      //   if (distance <= restrauntCart?.restraunt?.maximum_delivery_radius) {
+      //     return item
+      //   }
+      // })
+
+      setUserAddresses(res.data);
+
+      const customerLocation = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      res.data.map((data) => {
+        const addressLocation = {
+          latitude: data.latitude,
+          longitude: data.longitude,
+        };
+
+        var distance = getDistance(customerLocation, addressLocation);
+        if (distance <= 150) {
+          setSelectedAddress(data);
+        }
+      });
+    } catch (err) {}
+  };
+
 
   useEffect(() => {
     if (accessToken !== null) {
       loadCart();
+
     }
   }, [accessToken]);
 
+  useEffect(() => {
+    if (accessToken !== null && location!==null && user!==null) {
+      getUserAddressDetails();
+    }
+  }, [accessToken,location,user]);
 
   const deleteCart = async () => {
     try {
@@ -283,7 +332,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const removeCustomisedItemToCart = async (item_id, restrauntId) => {
-    setCustomisedIsNotRemoved(false)
+    setCustomisedIsNotRemoved(false);
     setDishToCart({ itemId: item_id, status: true });
     try {
       const res = await axios.post(
@@ -295,10 +344,10 @@ export const AuthProvider = ({ children }) => {
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
-      if(res.data.message == "Remove of multi item not possible"){
-        setCustomisedIsNotRemoved(true)
+      if (res.data.message == "Remove of multi item not possible") {
+        setCustomisedIsNotRemoved(true);
         setDishToCart({ itemId: item_id, status: false });
-        return true
+        return true;
       }
 
       if (res.data.message == "Item Removed to Cart") {
@@ -312,7 +361,7 @@ export const AuthProvider = ({ children }) => {
       return false;
     }
   };
-  
+
   const addCustomisedItemToCartFromCart = async (
     cartItemId,
     item_id,
@@ -350,23 +399,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const removeCustomisedItemToCartFromCart = async ( cartItemId,item_id, restrauntId) => {
-    setCustomisedIsNotRemoved(false)
+  const removeCustomisedItemToCartFromCart = async (
+    cartItemId,
+    item_id,
+    restrauntId
+  ) => {
+    setCustomisedIsNotRemoved(false);
     setDishToCart({ itemId: item_id, status: true });
     try {
       const res = await axios.post(
         `${API_URL}/restraunt/cart/remove-customised-item-cart/`,
         {
-          cartItemId:cartItemId,
-     
+          cartItemId: cartItemId,
         },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
-      if(res.data.message == "Remove of multi item not possible"){
-        setCustomisedIsNotRemoved(true)
-        setDishToCart({  itemId: item_id, status: false });
-        return true
+      if (res.data.message == "Remove of multi item not possible") {
+        setCustomisedIsNotRemoved(true);
+        setDishToCart({ itemId: item_id, status: false });
+        return true;
       }
 
       if (res.data.message == "Item Removed to Cart") {
@@ -381,8 +433,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-
- 
   const values = {
     isLoading,
     setIsLoading,
@@ -421,12 +471,14 @@ export const AuthProvider = ({ children }) => {
     addCustomisedItemToCart,
     removeCustomisedItemToCart,
 
-    
     dishToCart,
     customisedIsNotRemoved,
     setCustomisedIsNotRemoved,
     addCustomisedItemToCartFromCart,
     removeCustomisedItemToCartFromCart,
+    selectedAddress,
+    setSelectedAddress,
+    userAddresses
   };
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
