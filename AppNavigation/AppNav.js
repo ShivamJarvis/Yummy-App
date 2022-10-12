@@ -6,13 +6,15 @@ import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
 import LoadingComponent from '../components/LoadingComponent';
 import Toast from 'react-native-simple-toast';
+import RequestLocationPermission from '../Screens/HelperScreens/RequestLocationPermission';
 
 
 export default function AppNav() {
-  const {isAuthenticated, setLocation,loginCustomer} = authContext()
+  const {isAuthenticated, setLocation,loginCustomer,setGlobalCoordinates} = authContext()
 
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [locationPermissionGranted, setLocationPermissionGraned] = useState(false);
 
   
   useEffect(() => {
@@ -27,7 +29,10 @@ export default function AppNav() {
       }
 
       let location = await Location.getCurrentPositionAsync({});
+      setLocationPermissionGraned(true)
       setLocation(location);
+
+      setGlobalCoordinates({'latitude':location.coords.latitude,'longitude':location.coords.longitude})
      
     
       setLoading(false)
@@ -42,6 +47,10 @@ export default function AppNav() {
 
     if(loading){
       return <LoadingComponent />
+    }
+
+    if(!locationPermissionGranted){
+      return <RequestLocationPermission />
     }
   
     return (

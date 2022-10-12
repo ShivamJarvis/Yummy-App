@@ -114,9 +114,9 @@ const HomeScreen = ({ navigation }) => {
     >
       <StatusBar backgroundColor={"#f78783"} />
       <HeaderComponent />
-      {/* <TouchableOpacity onPress={cleanStorage}>
+      <TouchableOpacity onPress={cleanStorage}>
         <Text>Clean Async Storage {user?.id}</Text>
-      </TouchableOpacity> */}
+      </TouchableOpacity>
 
       <ScrollView
         style={{ flex: 1, marginTop: 20 }}

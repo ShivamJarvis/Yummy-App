@@ -15,16 +15,15 @@ import { API_URL } from "@env";
 import LoadingComponent from "./../../components/LoadingComponent";
 import FooterComponent from "./../../components/FooterComponent";
 import { getDistance } from "geolib";
-import SelectDropdown from "react-native-select-dropdown";
 import CartItemCard from "../../components/CartComponents/CartItemCard";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import MCIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import RBSheet from "react-native-raw-bottom-sheet";
 import IonIcon from "react-native-vector-icons/Ionicons";
-
+import FAIcon from "react-native-vector-icons/FontAwesome";
 
 const CartScreen = ({ navigation }) => {
-  const { accessToken, selectedAddress, setSelectedAddress, userAddresses } =
+  const { accessToken, selectedAddress,setGlobalCoordinates, setSelectedAddress, userAddresses } =
     authContext();
   const newAddressSheetRef = useRef();
   const [cartDetails, setCartDetails] = useState({});
@@ -46,6 +45,9 @@ const CartScreen = ({ navigation }) => {
     });
 
     var calculatedDeliveryTime = dishPreparationTime + calculatedDistance * 3;
+    if (calculatedDeliveryTime <= 35){
+      calculatedDeliveryTime = 35
+    }
 
     setDeliveryTime(calculatedDeliveryTime);
   };
@@ -276,56 +278,10 @@ const CartScreen = ({ navigation }) => {
                 <Text
                   style={{ ...styles.mainText, color: "#ffffff", fontSize: 12 }}
                 >
-                  Add New Address
+                  Choose / Add New Address
                 </Text>
               </TouchableOpacity>
 
-              <SelectDropdown
-                data={userAddresses}
-                defaultButtonText="Choose Address"
-                buttonTextStyle={{
-                  ...styles.mainText,
-                  color: "#ffffff",
-                  fontSize: 12,
-                }}
-                buttonStyle={{
-                  ...styles.buttonStyle,
-                  flex: 1,
-                  marginHorizontal: 10,
-                }}
-                selectedRowTextStyle={{ color: "#000000" }}
-                rowTextStyle={{ fontSize: 13 }}
-                defaultValue={selectedAddress}
-                onSelect={(selectedItem, index) => {
-                  setSelectedAddress(selectedItem);
-                }}
-                buttonTextAfterSelection={(selectedItem, index) => {
-                  // text represented after item is selected
-                  // if data array is an array of objects then return selectedItem.property to render after item is selected
-
-                  if (selectedAddress.address_type == "Home") {
-                    return (
-                      <FeatherIcon name="home" color={"#f78783"} size={20} />
-                    );
-                  }
-                  if (selectedAddress.address_type == "Work") {
-                    return (
-                      <MCIcon
-                        name="office-building-marker-outline"
-                        color={"#f78783"}
-                        size={20}
-                      />
-                    );
-                  }
-
-                  return selectedItem.address_type;
-                }}
-                rowTextForSelection={(item, index) => {
-                  // text represented for each item in dropdown
-                  // if data array is an array of objects then return item.property to represent item in dropdown
-                  return item.address_type;
-                }}
-              />
             </View>
           </View>
         )}
@@ -381,6 +337,12 @@ const CartScreen = ({ navigation }) => {
                       size={22}
                     />
                   )}
+                  {selectedAddress.address_type == "Friends & Family" && (
+                   <FAIcon name="users" color={"#f78783"} size={22} />
+                  )}
+                  {selectedAddress.address_type == "Other" && (
+                    <FAIcon name="location-arrow" color={"#f78783"} size={22} />
+                  )}
                   <FeatherIcon name="chevron-down" size={20} />
                 </View>
               </TouchableOpacity>
@@ -412,12 +374,13 @@ const CartScreen = ({ navigation }) => {
 
       <RBSheet
         ref={newAddressSheetRef}
-        height={190}
+       
         openDuration={250}
         customStyles={{
           container: {
             borderTopLeftRadius: 30,
             borderTopRightRadius: 30,
+            minHeight:10
           },
         }}
       >
@@ -441,58 +404,104 @@ const CartScreen = ({ navigation }) => {
             >
               Choose a delivery address
             </Text>
-
-            {userAddresses &&
-              userAddresses.map((address) => {
-                return (
-                  <TouchableOpacity
-                    key={address.id}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      setSelectedAddress(address);
-                      newAddressSheetRef.current.close()
-                    }}
-                  >
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        margin: 5,
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {userAddresses &&
+                userAddresses.map((address) => {
+                  return (
+                    <TouchableOpacity
+                      key={address.id}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        setSelectedAddress(address);
+                        setGlobalCoordinates({'latitude':address.latitude,'longitude':address.longitude})
+                        newAddressSheetRef.current.close();
                       }}
+                      style={{marginBottom:10}}
                     >
-                      {address.address_type == "Home" && (
-                        <View
-                          style={{
-                            borderWidth: 1,
-                            borderColor: "#cecece",
-                            borderRadius: 5,
-                            padding: 5,
-                            marginRight: 10,
-                          }}
-                        >
-                          <IonIcon
-                            name="home-sharp"
-                            color={"#f78783"}
-                            size={22}
-                          />
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          margin: 5,
+                        }}
+                      >
+                        {address.address_type == "Home" && (
+                          <View
+                            style={{
+                              borderWidth: 1,
+                              borderColor: "#cecece",
+                              borderRadius: 5,
+                              padding: 5,
+                              marginRight: 10,
+                            }}
+                          >
+                            <IonIcon
+                              name="home-sharp"
+                              color={"#f78783"}
+                              size={22}
+                            />
+                          </View>
+                        )}
+                        {address.address_type == "Work" && (
+                          <View
+                            style={{
+                              borderWidth: 1,
+                              borderColor: "#cecece",
+                              borderRadius: 5,
+                              padding: 5,
+                              marginRight: 10,
+                            }}
+                          >
+                            <MCIcon
+                              name="office-building-marker-outline"
+                              color={"#f78783"}
+                              size={22}
+                            />
+                          </View>
+                        )}
+                        {address.address_type == "Friends & Family" && (
+                          <View
+                            style={{
+                              borderWidth: 1,
+                              borderColor: "#cecece",
+                              borderRadius: 5,
+                              padding: 5,
+                              marginRight: 10,
+                            }}
+                          >
+                            <FAIcon name="users" color={"#f78783"} size={22} />
+                          </View>
+                        )}
+                        {address.address_type == "Other" && (
+                          <View
+                            style={{
+                              borderWidth: 1,
+                              borderColor: "#cecece",
+                              borderRadius: 5,
+                              padding: 5,
+                              marginRight: 10,
+                            }}
+                          >
+                            <FAIcon name="location-arrow" color={"#f78783"} size={22} />
+                          </View>
+                        )}
+                        <View>
+                          <Text style={{ fontWeight: "700" }}>
+                            {address.address_type}
+                          </Text>
+                          <Text
+                            numberOfLines={1}
+                            style={{ fontSize: 12, color: "#7e7e7e" }}
+                          >
+                            {address.address_line_1}, {address.address_line_2},{" "}
+                            {address.address_line_3}
+                          </Text>
                         </View>
-                      )}
-                      <View>
-                        <Text style={{ fontWeight: "700" }}>
-                          {address.address_type}
-                        </Text>
-                        <Text
-                          numberOfLines={1}
-                          style={{ fontSize: 12, color: "#7e7e7e" }}
-                        >
-                          {address.address_line_1}, {address.address_line_2},{" "}
-                          {address.address_line_3}
-                        </Text>
                       </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
+                    </TouchableOpacity>
+                  );
+                })}
+            </ScrollView>
           </View>
         </View>
 
@@ -501,6 +510,7 @@ const CartScreen = ({ navigation }) => {
             flexDirection: "row",
             paddingHorizontal: 10,
             marginBottom: 10,
+       
           }}
         >
           <TouchableOpacity

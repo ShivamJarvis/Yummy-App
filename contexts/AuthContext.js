@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { getDistance } from "geolib";
 import axios from "axios";
 import { API_URL } from "@env";
@@ -22,17 +22,20 @@ export const AuthProvider = ({ children }) => {
   const [refreshToken, setRefreshToken] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [cart, setCart] = useState({});
+  const [globalCoordinates, setGlobalCoordinates] = useState({});
   const [cartRestrauntId, setCartRestrauntId] = useState(null);
   const [dishToCart, setDishToCart] = useState({ itemId: null, status: false });
   const [customisedIsNotRemoved, setCustomisedIsNotRemoved] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [userAddresses, setUserAddresses] = useState([]);
+  
 
   useEffect(() => {
-    if (location !== null) {
+    if (globalCoordinates !== {}) {
+      console.log(globalCoordinates)
       const customerLocation = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
+        latitude: globalCoordinates.latitude,
+        longitude: globalCoordinates.longitude,
       };
 
       axios
@@ -73,7 +76,7 @@ export const AuthProvider = ({ children }) => {
         })
         .catch((err) => {});
     }
-  }, [location, refreshing]);
+  }, [globalCoordinates, refreshing]);
 
   const getOTP = async () => {
     try {
@@ -101,6 +104,7 @@ export const AuthProvider = ({ children }) => {
 
         if (data.message == "Success") {
           setUser(data.data);
+          console.log(data.data);
           setIsAuthenticated(true);
           setAccessToken(storageRes);
           setIsLoading(false);
@@ -177,28 +181,11 @@ export const AuthProvider = ({ children }) => {
 
   const getUserAddressDetails = async () => {
     try {
-      const res = await axios.get(
-        `${API_URL}/user/address-details/?user=${user.id}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      const res = await axios.get(`${API_URL}/user/address-details/`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
 
-      // var restrauntLocation = {
-      //   latitude: restrauntCart?.restraunt?.latitude,
-      //   longitude: restrauntCart?.restraunt?.longitude,
-      // };
-
-      // res.data.filter(item=>{
-      //   const addressLocation = {
-      //     latitude: item.latitude,
-      //     longitude: item.longitude,
-      //   };
-      //   var distance = getDistance(restrauntLocation, addressLocation) / 1000;
-      //   if (distance <= restrauntCart?.restraunt?.maximum_delivery_radius) {
-      //     return item
-      //   }
-      // })
+      
 
       setUserAddresses(res.data);
 
@@ -213,26 +200,25 @@ export const AuthProvider = ({ children }) => {
         };
 
         var distance = getDistance(customerLocation, addressLocation);
-        if (distance <= 150) {
+        if (distance <= 200) {
           setSelectedAddress(data);
+          setGlobalCoordinates({'latitude':data.latitude,'longitude':data.longitude})
         }
       });
     } catch (err) {}
   };
 
-
   useEffect(() => {
     if (accessToken !== null) {
       loadCart();
-
     }
   }, [accessToken]);
 
   useEffect(() => {
-    if (accessToken !== null && location!==null && user!==null) {
+    if (accessToken !== null && location !== null && user !== null) {
       getUserAddressDetails();
     }
-  }, [accessToken,location,user]);
+  }, [accessToken, location, user]);
 
   const deleteCart = async () => {
     try {
@@ -433,11 +419,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+ 
   const values = {
     isLoading,
     setIsLoading,
     isAuthenticated,
     setIsAuthenticated,
+
+    globalCoordinates,
+    setGlobalCoordinates,
     phoneNo,
     setPhoneNo,
     loginCustomer,
@@ -478,7 +468,10 @@ export const AuthProvider = ({ children }) => {
     removeCustomisedItemToCartFromCart,
     selectedAddress,
     setSelectedAddress,
-    userAddresses
+    userAddresses,
+    setUserAddresses,
+    
+    
   };
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
