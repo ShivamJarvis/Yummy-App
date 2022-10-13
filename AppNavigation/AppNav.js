@@ -10,11 +10,11 @@ import RequestLocationPermission from '../Screens/HelperScreens/RequestLocationP
 
 
 export default function AppNav() {
-  const {isAuthenticated, setLocation,loginCustomer,setGlobalCoordinates} = authContext()
+  const {isAuthenticated, setLocation,loginCustomer,setGlobalCoordinates,locationPermissionGranted, setLocationPermissionGranted} = authContext()
 
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
-  const [locationPermissionGranted, setLocationPermissionGraned] = useState(false);
+  
 
   
   useEffect(() => {
@@ -25,11 +25,12 @@ export default function AppNav() {
         if (status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
         Toast.show('Permission to access location was denied', Toast.LONG);
+        setLoading(false)
         return;
       }
 
       let location = await Location.getCurrentPositionAsync({});
-      setLocationPermissionGraned(true)
+      setLocationPermissionGranted(true)
       setLocation(location);
 
       setGlobalCoordinates({'latitude':location.coords.latitude,'longitude':location.coords.longitude})

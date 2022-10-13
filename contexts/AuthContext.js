@@ -28,55 +28,56 @@ export const AuthProvider = ({ children }) => {
   const [customisedIsNotRemoved, setCustomisedIsNotRemoved] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [userAddresses, setUserAddresses] = useState([]);
+  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
   
 
-  useEffect(() => {
-    if (globalCoordinates !== {}) {
-      console.log(globalCoordinates)
-      const customerLocation = {
-        latitude: globalCoordinates.latitude,
-        longitude: globalCoordinates.longitude,
-      };
+  // useEffect(() => {
+  //   if (globalCoordinates !== {}) {
+      
+  //     const customerLocation = {
+  //       latitude: globalCoordinates.latitude,
+  //       longitude: globalCoordinates.longitude,
+  //     };
 
-      axios
-        .get(`${API_URL}/restraunt/`)
-        .then((data) => {
-          const nearRestrauntsData = data.data.filter((item) => {
-            var restrauntLocation = {
-              latitude: item.latitude,
-              longitude: item.longitude,
-            };
-            var distance = getDistance(customerLocation, restrauntLocation);
+  //     axios
+  //       .get(`${API_URL}/restraunt/`)
+  //       .then((data) => {
+  //         const nearRestrauntsData = data.data.filter((item) => {
+  //           var restrauntLocation = {
+  //             latitude: item.latitude,
+  //             longitude: item.longitude,
+  //           };
+  //           var distance = getDistance(customerLocation, restrauntLocation);
 
-            if (distance / 1000 <= item.maximum_delivery_radius) {
-              return item;
-            }
-          });
+  //           if (distance / 1000 <= item.maximum_delivery_radius) {
+  //             return item;
+  //           }
+  //         });
 
-          setRestraunts(nearRestrauntsData);
-        })
-        .catch((err) => {});
+  //         setRestraunts(nearRestrauntsData);
+  //       })
+  //       .catch((err) => {});
 
-      axios
-        .get(`${API_URL}/restraunt/?rating__gte=4.5&rating__lte=`)
-        .then((data) => {
-          const nearRestrauntsData = data.data.filter((item) => {
-            var restrauntLocation = {
-              latitude: item.latitude,
-              longitude: item.longitude,
-            };
-            var distance = getDistance(customerLocation, restrauntLocation);
+  //     axios
+  //       .get(`${API_URL}/restraunt/?rating__gte=4.5&rating__lte=`)
+  //       .then((data) => {
+  //         const nearRestrauntsData = data.data.filter((item) => {
+  //           var restrauntLocation = {
+  //             latitude: item.latitude,
+  //             longitude: item.longitude,
+  //           };
+  //           var distance = getDistance(customerLocation, restrauntLocation);
 
-            if (distance / 1000 <= item.maximum_delivery_radius) {
-              return item;
-            }
-          });
+  //           if (distance / 1000 <= item.maximum_delivery_radius) {
+  //             return item;
+  //           }
+  //         });
 
-          setPopularRestraunts(nearRestrauntsData);
-        })
-        .catch((err) => {});
-    }
-  }, [globalCoordinates, refreshing]);
+  //         setPopularRestraunts(nearRestrauntsData);
+  //       })
+  //       .catch((err) => {});
+  //   }
+  // }, [globalCoordinates, refreshing]);
 
   const getOTP = async () => {
     try {
@@ -104,7 +105,7 @@ export const AuthProvider = ({ children }) => {
 
         if (data.message == "Success") {
           setUser(data.data);
-          console.log(data.data);
+          
           setIsAuthenticated(true);
           setAccessToken(storageRes);
           setIsLoading(false);
@@ -470,7 +471,8 @@ export const AuthProvider = ({ children }) => {
     setSelectedAddress,
     userAddresses,
     setUserAddresses,
-    
+    locationPermissionGranted,
+setLocationPermissionGranted
     
   };
 

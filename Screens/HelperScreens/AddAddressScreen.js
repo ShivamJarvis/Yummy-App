@@ -40,7 +40,10 @@ const AddAddressScreen = ({ navigation }) => {
   const [locationName, setLocationName] = useState("");
   const [addressSavedFor, setAddressSavedFor] = useState("");
   const [addressDetails, setAddressDetails] = useState({});
-  const [coordinates, setCoordinates] = useState();
+  const [coordinates, setCoordinates] = useState({
+    latitude: location.coords.latitude,
+    longitude: location.coords.longitude,
+  });
 
   const data = [
     {
@@ -135,7 +138,7 @@ const AddAddressScreen = ({ navigation }) => {
       setCoordinates(currentCoordinates);
       const result = await Location.reverseGeocodeAsync(currentCoordinates);
       setAddressDetails({ ...addressDetails, zip_code: result[0].postalCode });
-      console.log(result);
+   
       setLocationDescription(
         `${result[0].name}, ${result[0].district}, ${result[0].subregion} - ${result[0].postalCode}`
       );
@@ -147,16 +150,14 @@ const AddAddressScreen = ({ navigation }) => {
 
   return (
     <View style={{ flex: 1 }}>
-      
       <MapView
         style={{
           flex: 3,
           width: "100%",
         }}
-        loadingEnabled={true}
+        
         showsCompass={false}
         showsMyLocationButton={false}
-
         onMapReady={handleMapReady}
         minZoomLevel={19}
         initialRegion={{
@@ -166,8 +167,8 @@ const AddAddressScreen = ({ navigation }) => {
           longitudeDelta: 0.05,
         }}
         region={{
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
           latitudeDelta: 0.04,
           longitudeDelta: 0.05,
         }}

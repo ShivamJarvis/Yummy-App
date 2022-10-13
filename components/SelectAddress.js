@@ -6,10 +6,11 @@ import RBSheet from "react-native-raw-bottom-sheet";
 import IonIcon from "react-native-vector-icons/Ionicons";
 import FAIcon from "react-native-vector-icons/FontAwesome";
 import { authContext } from '../contexts/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
 const SelectAddress = ({newAddressSheetRef}) => {
   const {userAddresses,setGlobalCoordinates, setSelectedAddress} = authContext()
- 
+  const navigation = useNavigation()
   
   return (
     

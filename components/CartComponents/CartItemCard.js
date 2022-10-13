@@ -166,12 +166,12 @@ const CartItemCard = ({ item, restrauntId, setCartReloading }) => {
         <View style={{ flexDirection: "row", alignItems: "flex-start",justifyContent:"flex-start" }}>
           <VegNonVegSymbol is_veg={item.item.is_veg} />
 
-          <View>
+          <View style={{paddingRight:17}}>
             <Text numberOfLines={1} style={styles.dishName}>
               {item.item.item_name}
             </Text>
             {item.item.is_customisable && (
-              <Text style={{ fontSize: 12, color: "#cecece",marginLeft:5,marginTop:2 }}>
+              <Text style={{ fontSize: 11, color: "#cecece",marginHorizontal:5,marginTop:2 }}>
                 {item.cart_item
                   .map((customised_item) => {
                     return customised_item.customisation_option.name;
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   dishName: {
     marginLeft: 5,
 
-    fontSize: 13,
+    fontSize: 12,
   },
   addRemoveQtyContainer: {
     flexDirection: "row",
