@@ -2,27 +2,28 @@ import {
   StyleSheet,
   Text,
   View,
+  TouchableOpacity,
   FlatList,
   Image,
-
+  Dimensions,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Icon from "react-native-vector-icons/Feather";
 import axios from "axios";
 import { API_URL } from "@env";
 import { getDistance } from "geolib";
 import DetailedRestrauntCard from "../../components/HomeScreenComponents/DetailedRestrauntCard";
 import { authContext } from "../../contexts/AuthContext";
 import LoadingComponent from "./../../components/LoadingComponent";
-import HeaderComponent from "../../components/HeaderComponent";
 import CartFloatComponent from "../../components/CartFloatComponent";
-import SearchBarComponent from "../../components/SearchBarComponent";
 
-const CuisineBasedRestraunts = ({ navigation }) => {
+const CuisineBasedRestraunts = ({ navigation, route }) => {
+  const { id, name } = route.params;
   const [restraunts, setRestraunts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const { globalCoordinates } = authContext();
-  const getRestraunts = async () => {
+  const getCusisines = async () => {
     try {
       setIsLoading(true);
 
@@ -32,10 +33,10 @@ const CuisineBasedRestraunts = ({ navigation }) => {
       };
 
       const res = await axios.get(
-        `${API_URL}/restraunt/`
+        `${API_URL}/restraunt/cuisine-detail/?id=${id}`
       );
 
-      var filteredRestraunts = res.data.filter(
+      var filteredRestraunts = res.data[0].restraunt_cuisine.filter(
         (restraunt) => {
           var restrauntLocation = {
             latitude: restraunt.latitude,
@@ -60,8 +61,8 @@ const CuisineBasedRestraunts = ({ navigation }) => {
     }
   };
   useEffect(() => {
-    getRestraunts();
-  }, [globalCoordinates]);
+    getCusisines();
+  }, [id]);
 
   if (isLoading) {
     return <LoadingComponent />;
@@ -74,8 +75,16 @@ const CuisineBasedRestraunts = ({ navigation }) => {
         backgroundColor: "#ffffff",
       }}
     >
-      <HeaderComponent />
-      <SearchBarComponent />
+      <View style={styles.headerContainer}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="chevron-left" size={35} style={{ color: "#f78783" }} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{name}</Text>
+      </View>
+
       {restraunts.length > 0 ? (
         <FlatList
           data={restraunts}

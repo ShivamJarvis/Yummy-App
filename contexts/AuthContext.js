@@ -158,6 +158,8 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     setIsLoading(false);
     setUser(null);
+    setSelectedAddress({})
+    setUserAddresses([])
   };
 
   const loadCart = async () => {

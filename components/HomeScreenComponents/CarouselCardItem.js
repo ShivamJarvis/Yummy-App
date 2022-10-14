@@ -19,16 +19,18 @@ const CarouselCardItem = ({ item, index }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
-    borderRadius: 8,
+    borderRadius: 10,
     width: Dimensions.get('window').width ,
     paddingBottom: 40,
     shadowColor: "#000",
+
     
     
   },
   image: {
     width: Dimensions.get('window').width ,
     height:150,
+    borderRadius:10,
   },
   
   

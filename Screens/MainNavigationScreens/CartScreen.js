@@ -5,7 +5,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  TextInput,
 } from "react-native";
+
 import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Feather";
@@ -21,11 +23,13 @@ import MCIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import IonIcon from "react-native-vector-icons/Ionicons";
 import FAIcon from "react-native-vector-icons/FontAwesome";
 import SelectAddress from "../../components/SelectAddress";
+import DeliveryPartnerTip from "../../components/CartComponents/DeliveryPartnerTip";
+import DiscountSheet from "../../components/CartComponents/DiscountSheet";
 
 const CartScreen = ({ navigation }) => {
-  const { accessToken, selectedAddress, userAddresses } =
-    authContext();
+  const { accessToken, selectedAddress, userAddresses } = authContext();
   const newAddressSheetRef = useRef();
+  const discountSheetRef = useRef();
   const [cartDetails, setCartDetails] = useState({});
   const [cartReloading, setCartReloading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -33,6 +37,10 @@ const CartScreen = ({ navigation }) => {
   const [distance, setDistance] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
   const [deliveryTime, setDeliveryTime] = useState(0);
+  const [partnerTipAmount, setPartnerTipAmount] = useState(0);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [discountCoupons, setDiscountCoupons] = useState([]);
 
   var dishPreparationTime = 0;
   const handleDeliveryTime = (restrauntCart, calculatedDistance) => {
@@ -45,8 +53,8 @@ const CartScreen = ({ navigation }) => {
     });
 
     var calculatedDeliveryTime = dishPreparationTime + calculatedDistance * 3;
-    if (calculatedDeliveryTime <= 35){
-      calculatedDeliveryTime = 35
+    if (calculatedDeliveryTime <= 35) {
+      calculatedDeliveryTime = 35;
     }
 
     setDeliveryTime(calculatedDeliveryTime);
@@ -109,6 +117,16 @@ const CartScreen = ({ navigation }) => {
       setCartDetails(res.data.data);
       setLoading(false);
       handleDeliveryCharges(res.data.data);
+
+      const coupon_res = await axios.get(
+        `${API_URL}/restraunt/discount-coupon/`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      if (coupon_res.data.status == "success") {
+        setDiscountCoupons(coupon_res.data.data);
+      }
     } catch (err) {}
   };
 
@@ -164,6 +182,49 @@ const CartScreen = ({ navigation }) => {
               key={item.id}
             />
           ))}
+
+          <View
+            style={{
+              borderBottomWidth: 1,
+              borderStyle: "dashed",
+              borderBottomColor: "#000000",
+              marginTop: 15,
+            }}
+          ></View>
+          <TextInput
+            placeholder="Write instructions for restraunt"
+            cursorColor="#ff6666"
+            multiline={true}
+            numberOfLines={3}
+            maxLength={80}
+          />
+        </View>
+
+        <View style={{ marginHorizontal: 10, marginTop: 20 }}>
+          <Text style={{ fontWeight: "700", fontSize: 15 }}>
+            Offers & Benefits
+          </Text>
+
+          <View style={styles.floatContainer}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => discountSheetRef.current.open()}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingHorizontal: 10,
+                }}
+              >
+                <Text style={{ fontWeight: "700" }}>
+                  {selectedCoupon ? selectedCoupon.code : "Apply Coupon"}
+                </Text>
+                <IonIcon name="chevron-forward" size={20} />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={{ marginHorizontal: 10, marginTop: 20 }}>
@@ -176,6 +237,11 @@ const CartScreen = ({ navigation }) => {
               Thank your delivery partner by leaving them a tip. 100% of the tip
               will go to your delivery partner.
             </Text>
+            <DeliveryPartnerTip
+              setCartTotal={setCartTotal}
+              partnerTipAmount={partnerTipAmount}
+              setPartnerTipAmount={setPartnerTipAmount}
+            />
           </View>
         </View>
 
@@ -205,9 +271,17 @@ const CartScreen = ({ navigation }) => {
               </Text>
             )}
 
+            {partnerTipAmount > 0 && (
+              <View style={styles.billingLine}>
+                <Text style={{ color: "#1c1c1c" }}>Tip Amount</Text>
+                <Text style={{ fontWeight: "700" }}>₹{partnerTipAmount}</Text>
+              </View>
+            )}
+
             <View
               style={{
                 borderBottomWidth: StyleSheet.hairlineWidth,
+                borderStyle: "dashed",
                 marginVertical: 10,
               }}
             ></View>
@@ -219,16 +293,26 @@ const CartScreen = ({ navigation }) => {
               </Text>
             </View>
 
+            {couponDiscount > 0 && (
+              <View style={styles.billingLine}>
+                <Text style={{ color: "#1c1c1c" }}>Coupon Discount</Text>
+                <Text style={{ fontWeight: "700" }}>₹{couponDiscount}</Text>
+              </View>
+            )}
+
             <View
               style={{
                 borderBottomWidth: StyleSheet.hairlineWidth,
+                borderStyle: "dashed",
                 marginVertical: 10,
               }}
             ></View>
 
             <View style={styles.billingLine}>
               <Text style={{ fontWeight: "700" }}>To Pay</Text>
-              <Text style={{ fontWeight: "700" }}>₹{cartTotal}</Text>
+              <Text style={{ fontWeight: "700" }}>
+                ₹{cartTotal + partnerTipAmount - couponDiscount}
+              </Text>
             </View>
           </View>
         </View>
@@ -281,7 +365,6 @@ const CartScreen = ({ navigation }) => {
                   Choose / Add New Address
                 </Text>
               </TouchableOpacity>
-
             </View>
           </View>
         )}
@@ -338,7 +421,7 @@ const CartScreen = ({ navigation }) => {
                     />
                   )}
                   {selectedAddress.address_type == "Friends & Family" && (
-                   <FAIcon name="users" color={"#f78783"} size={22} />
+                    <FAIcon name="users" color={"#f78783"} size={22} />
                   )}
                   {selectedAddress.address_type == "Other" && (
                     <FAIcon name="location-arrow" color={"#f78783"} size={22} />
@@ -354,16 +437,32 @@ const CartScreen = ({ navigation }) => {
           style={{
             borderBottomWidth: StyleSheet.hairlineWidth,
             marginVertical: 10,
+            borderStyle:"dashed"
           }}
         ></View>
 
         <View style={styles.detailContainer}>
           <View>
-            <Text style={styles.mainText}>₹{cartTotal}</Text>
+            <Text style={styles.mainText}>
+              ₹{cartTotal + partnerTipAmount - couponDiscount}
+            </Text>
           </View>
 
           {distance <= cartDetails?.restraunt?.maximum_delivery_radius && (
-            <TouchableOpacity activeOpacity={0.8} style={styles.buttonStyle}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.buttonStyle}
+              onPress={() => {
+                navigation.navigate('ProceedToPay',{
+                payload:{"cartTotal":cartTotal,
+                  "couponDiscount":couponDiscount,
+                  "deliveryCharge":deliveryCharge,
+                  "partnerTipAmount":partnerTipAmount}
+
+
+                })
+              }}
+            >
               <Text style={{ ...styles.mainText, color: "#ffffff" }}>
                 Proceed to Pay
               </Text>
@@ -371,9 +470,15 @@ const CartScreen = ({ navigation }) => {
           )}
         </View>
       </View>
-          
-          <SelectAddress newAddressSheetRef={newAddressSheetRef} />
 
+      <SelectAddress newAddressSheetRef={newAddressSheetRef} />
+      <DiscountSheet
+        discountSeetRef={discountSheetRef}
+        discountCoupons={discountCoupons}
+        setCouponDiscount={setCouponDiscount}
+        cartTotal={cartTotal - deliveryCharge}
+        setSelectedCoupon={setSelectedCoupon}
+      />
     </SafeAreaView>
   );
 };

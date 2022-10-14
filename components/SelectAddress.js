@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View,ScrollView,TouchableOpacity } from 'react-native'
-import React,{useRef} from 'react'
-import FeatherIcon from "react-native-vector-icons/Feather";
+import React from 'react'
+
 import MCIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import RBSheet from "react-native-raw-bottom-sheet";
 import IonIcon from "react-native-vector-icons/Ionicons";

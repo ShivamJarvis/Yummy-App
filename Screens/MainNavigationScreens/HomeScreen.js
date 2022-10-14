@@ -1,5 +1,4 @@
 import {
-  Dimensions,
   FlatList,
   ScrollView,
   StyleSheet,
@@ -7,26 +6,24 @@ import {
   View,
   RefreshControl,
   StatusBar,
-  TouchableOpacity,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authContext } from "./../../contexts/AuthContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import HeaderComponent from "../../components/HeaderComponent";
 import CategoriesCard from "../../components/HomeScreenComponents/CategoriesCard";
 import SmallRestrauntCard from "../../components/HomeScreenComponents/SmallRestrauntCard";
 
-import BannerSlider from "../../components/HomeScreenComponents/BannerSlider";
 import FooterComponent from "../../components/FooterComponent";
 import CartFloatComponent from "../../components/CartFloatComponent";
 import axios from "axios";
 import { API_URL } from "@env";
 import { getDistance } from "geolib";
-import LoadingComponent from "../../components/LoadingComponent";
-import Carousel from "react-native-snap-carousel";
-import CarouselCardItem, { SLIDER_WIDTH, ITEM_WIDTH } from './../../components/HomeScreenComponents/CarouselCardItem'
 
+import Carousel from "react-native-snap-carousel";
+import CarouselCardItem, {
+  SLIDER_WIDTH,
+} from "./../../components/HomeScreenComponents/CarouselCardItem";
 
 const HomeScreen = ({ navigation }) => {
   const [sectionedRestraunts, setSectionedRestraunts] = useState([]);
@@ -34,31 +31,21 @@ const HomeScreen = ({ navigation }) => {
   const [cuisineData, setCuisineData] = useState([]);
   const isCarousel = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { logoutCustomer, user, setRefreshing, refreshing, globalCoordinates } =
-    authContext();
-  const cleanStorage = async () => {
-    await AsyncStorage.clear();
+  const { setRefreshing, refreshing, globalCoordinates } = authContext();
 
-    logoutCustomer();
-  };
-
-  const getBannerData = async() => {
+  const getBannerData = async () => {
     try {
       const res = await axios.get(`${API_URL}/restraunt/banner/`);
-      setCarouselData(res.data)
-    } catch (err) {
-     
-    }
-  }
+      setCarouselData(res.data);
+    } catch (err) {}
+  };
 
-  const getCuisineData = async() => {
+  const getCuisineData = async () => {
     try {
       const res = await axios.get(`${API_URL}/restraunt/cuisine/`);
-      setCuisineData(res.data)
-    } catch (err) {
-     
-    }
-  }
+      setCuisineData(res.data);
+    } catch (err) {}
+  };
 
   const getSectionedRestrauntsData = async () => {
     try {
@@ -99,12 +86,10 @@ const HomeScreen = ({ navigation }) => {
     }
   }, [globalCoordinates, refreshing]);
 
-  useEffect(()=>{
-    getCuisineData()
-    getBannerData()
-  },[])
-
- 
+  useEffect(() => {
+    getCuisineData();
+    getBannerData();
+  }, []);
 
   const wait = (timeout) => {
     return new Promise((resolve) => setTimeout(resolve, timeout));
@@ -114,10 +99,6 @@ const HomeScreen = ({ navigation }) => {
     setRefreshing(true);
     wait(2000).then(() => setRefreshing(false));
   }, []);
-
-  if (isLoading) {
-    return <LoadingComponent />;
-  }
 
   return (
     <SafeAreaView
@@ -130,9 +111,6 @@ const HomeScreen = ({ navigation }) => {
     >
       <StatusBar backgroundColor={"#f78783"} />
       <HeaderComponent />
-      {/* <TouchableOpacity onPress={cleanStorage}>
-        <Text>Clean Async Storage {user?.id}</Text>
-      </TouchableOpacity> */}
 
       <ScrollView
         style={{ flex: 1, marginTop: 20 }}
@@ -141,7 +119,7 @@ const HomeScreen = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Categories */}
+        {/* Cuisines */}
         <FlatList
           data={cuisineData}
           renderItem={({ item, index }) => (
@@ -154,25 +132,24 @@ const HomeScreen = ({ navigation }) => {
           horizontal={true}
           showsHorizontalScrollIndicator={false}
         />
-        
-            <View style={{marginTop:20}}>
 
-        <Carousel
-          layout="tinder"
-          layoutCardOffset={1}
-          loop={true}
-          autoplay={true}
-          hasParallaxImages={true}
-
-          ref={isCarousel}
-          data={carouselData}
-          renderItem={CarouselCardItem}
-          sliderWidth={SLIDER_WIDTH}
-          itemWidth={SLIDER_WIDTH}
-          inactiveSlideShift={0}
-          useScrollView={true}
+        <View style={{ marginTop: 20 }}>
+          <Carousel
+            layout="default"
+            layoutCardOffset={10}
+            loop={true}
+            autoplay={true}
+            autoplayInterval={8000}
+            autoplayDelay={8000}
+            hasParallaxImages={true}
+            ref={isCarousel}
+            data={carouselData}
+            renderItem={CarouselCardItem}
+            sliderWidth={SLIDER_WIDTH}
+            itemWidth={SLIDER_WIDTH}
+            useScrollView={true}
           />
-          </View>
+        </View>
         {/* Popular Resturants */}
 
         {sectionedRestraunts &&
