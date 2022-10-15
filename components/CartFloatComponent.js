@@ -13,7 +13,7 @@ import axios from "axios";
 
 const CartFloatComponent = () => {
   const navigation = useNavigation();
-  const { accessToken, dishToCart,setCartRestrauntId } = authContext();
+  const { accessToken, dishToCart,setCartRestrauntId,orderPlaced } = authContext();
   const [cartDetails, setCartDetails] = useState({});
   const [itemCount, setItemCount] = useState(0);
 
@@ -34,13 +34,15 @@ const CartFloatComponent = () => {
         setCartRestrauntId(res.data.data.restraunt.id)
     }
 
-    } catch (err) {}
+    } catch (err) {
+      setItemCount(0)
+    }
   };
   useEffect(() => {
     if (dishToCart.status == false) {
       getCartDetails();
     }
-  }, [dishToCart.status,accessToken]);
+  }, [dishToCart.status,accessToken,orderPlaced]);
 
   if (itemCount == 0) {
     return null;

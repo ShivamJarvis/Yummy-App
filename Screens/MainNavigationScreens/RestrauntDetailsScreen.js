@@ -102,9 +102,7 @@ const RestrauntDetails = ({ route, navigation }) => {
   return (
     <SafeAreaView style={{ minHeight: "100%", backgroundColor: "#ffffff" }}>
       <ScrollView
-        // refreshControl={
-        //   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        // }
+       
         >
         
         <View style={styles.topImageContainer}>

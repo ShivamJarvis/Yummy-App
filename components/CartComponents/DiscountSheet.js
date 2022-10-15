@@ -10,7 +10,7 @@ import React from "react";
 import RBSheet from "react-native-raw-bottom-sheet";
 
 
-const DiscountSheet = ({ discountSeetRef, cartTotal, discountCoupons,setCouponDiscount,setSelectedCoupon }) => {
+const DiscountSheet = ({ discountSeetRef, cartTotal, discountCoupons,setCouponDiscount,setSelectedCoupon,selectedCoupon }) => {
   
     const handleCouponDiscount = (coupon) => {
         if(cartTotal < coupon.minimum_cart_amount ){
@@ -80,9 +80,9 @@ const DiscountSheet = ({ discountSeetRef, cartTotal, discountCoupons,setCouponDi
                     <View style={{flexDirection:"row",justifyContent:"space-between",paddingVertical:5}}>
 
                   <Text style={styles.couponCode}>{coupon.code}</Text>
-                  <TouchableOpacity onPress={()=>handleCouponDiscount(coupon)} activeOpacity={0.7}>
+                  {selectedCoupon == coupon ? <Text style={{color:"#c7c7c7",fontSize:16,fontWeight:"700"}}>APPLIED</Text> : <TouchableOpacity onPress={()=>handleCouponDiscount(coupon)} activeOpacity={0.7}>
                     <Text style={{color:"#ff6666",fontSize:16,fontWeight:"700"}}>APPLY</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity>}
                     </View>
                     <View style={{borderBottomWidth:1,borderStyle:"dashed",borderBottomColor:"#000000",marginVertical:15}}></View>
                     <Text style={{color:"#c3c3c3",fontWeight:"700",fontSize:13,textAlign:"justify"}}>

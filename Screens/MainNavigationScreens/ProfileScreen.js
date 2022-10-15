@@ -16,7 +16,7 @@ import { authContext } from "./../../contexts/AuthContext";
 import FooterComponent from './../../components/FooterComponent'
 import {STATIC_URL} from '@env'
 
-const ProfileScreen = () => {
+const ProfileScreen = ({navigation}) => {
   const { user,logoutCustomer } = authContext();
   console.log(user);
   return (
@@ -95,7 +95,11 @@ const ProfileScreen = () => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.clickContainer} activeOpacity={0.8} >
+          <TouchableOpacity style={styles.clickContainer} activeOpacity={0.8} onPress={()=>{
+            navigation.navigate("ActiveOrderDetailScreen", {
+              order_id: "O9DFQKGHH6",
+            });
+          }} >
             <View style={styles.tabContainer}>
               <IonIcon name="ios-reorder-three-outline" size={20} color="#ff6666" />
               <Text style={styles.tabTitle}>My Orders</Text>

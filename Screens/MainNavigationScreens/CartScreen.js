@@ -10,7 +10,6 @@ import {
 
 import React, { useEffect, useRef, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Icon from "react-native-vector-icons/Feather";
 import axios from "axios";
 import { authContext } from "../../contexts/AuthContext";
 import { API_URL } from "@env";
@@ -163,7 +162,11 @@ const CartScreen = ({ navigation }) => {
           activeOpacity={0.7}
           onPress={() => navigation.goBack()}
         >
-          <Icon name="chevron-left" size={35} style={{ color: "#f78783" }} />
+          <FeatherIcon
+            name="chevron-left"
+            size={35}
+            style={{ color: "#f78783" }}
+          />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{cartDetails?.restraunt?.name}</Text>
       </View>
@@ -437,7 +440,7 @@ const CartScreen = ({ navigation }) => {
           style={{
             borderBottomWidth: StyleSheet.hairlineWidth,
             marginVertical: 10,
-            borderStyle:"dashed"
+            borderStyle: "dashed",
           }}
         ></View>
 
@@ -453,14 +456,15 @@ const CartScreen = ({ navigation }) => {
               activeOpacity={0.8}
               style={styles.buttonStyle}
               onPress={() => {
-                navigation.navigate('ProceedToPay',{
-                payload:{"cartTotal":cartTotal,
-                  "couponDiscount":couponDiscount,
-                  "deliveryCharge":deliveryCharge,
-                  "partnerTipAmount":partnerTipAmount}
-
-
-                })
+                navigation.navigate("ProceedToPay", {
+                  cartTotal: cartTotal,
+                  couponDiscount: couponDiscount,
+                  deliveryCharge: deliveryCharge,
+                  partnerTipAmount: partnerTipAmount,
+                  cartDetails: cartDetails,
+                  deliveryTime: deliveryTime,
+                  distance: distance,
+                });
               }}
             >
               <Text style={{ ...styles.mainText, color: "#ffffff" }}>
@@ -478,6 +482,7 @@ const CartScreen = ({ navigation }) => {
         setCouponDiscount={setCouponDiscount}
         cartTotal={cartTotal - deliveryCharge}
         setSelectedCoupon={setSelectedCoupon}
+        selectedCoupon={selectedCoupon}
       />
     </SafeAreaView>
   );
@@ -534,6 +539,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
     paddingBottom: 10,
+    elevation: 1,
   },
   detailContainer: {
     flexDirection: "row",

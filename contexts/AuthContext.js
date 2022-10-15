@@ -1,5 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { getDistance } from "geolib";
 import axios from "axios";
 import { API_URL } from "@env";
@@ -26,58 +32,11 @@ export const AuthProvider = ({ children }) => {
   const [cartRestrauntId, setCartRestrauntId] = useState(null);
   const [dishToCart, setDishToCart] = useState({ itemId: null, status: false });
   const [customisedIsNotRemoved, setCustomisedIsNotRemoved] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [userAddresses, setUserAddresses] = useState([]);
-  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
-  
-
-  // useEffect(() => {
-  //   if (globalCoordinates !== {}) {
-      
-  //     const customerLocation = {
-  //       latitude: globalCoordinates.latitude,
-  //       longitude: globalCoordinates.longitude,
-  //     };
-
-  //     axios
-  //       .get(`${API_URL}/restraunt/`)
-  //       .then((data) => {
-  //         const nearRestrauntsData = data.data.filter((item) => {
-  //           var restrauntLocation = {
-  //             latitude: item.latitude,
-  //             longitude: item.longitude,
-  //           };
-  //           var distance = getDistance(customerLocation, restrauntLocation);
-
-  //           if (distance / 1000 <= item.maximum_delivery_radius) {
-  //             return item;
-  //           }
-  //         });
-
-  //         setRestraunts(nearRestrauntsData);
-  //       })
-  //       .catch((err) => {});
-
-  //     axios
-  //       .get(`${API_URL}/restraunt/?rating__gte=4.5&rating__lte=`)
-  //       .then((data) => {
-  //         const nearRestrauntsData = data.data.filter((item) => {
-  //           var restrauntLocation = {
-  //             latitude: item.latitude,
-  //             longitude: item.longitude,
-  //           };
-  //           var distance = getDistance(customerLocation, restrauntLocation);
-
-  //           if (distance / 1000 <= item.maximum_delivery_radius) {
-  //             return item;
-  //           }
-  //         });
-
-  //         setPopularRestraunts(nearRestrauntsData);
-  //       })
-  //       .catch((err) => {});
-  //   }
-  // }, [globalCoordinates, refreshing]);
+  const [locationPermissionGranted, setLocationPermissionGranted] =
+    useState(false);
 
   const getOTP = async () => {
     try {
@@ -105,7 +64,7 @@ export const AuthProvider = ({ children }) => {
 
         if (data.message == "Success") {
           setUser(data.data);
-          
+
           setIsAuthenticated(true);
           setAccessToken(storageRes);
           setIsLoading(false);
@@ -158,8 +117,8 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     setIsLoading(false);
     setUser(null);
-    setSelectedAddress({})
-    setUserAddresses([])
+    setSelectedAddress({});
+    setUserAddresses([]);
   };
 
   const loadCart = async () => {
@@ -188,8 +147,6 @@ export const AuthProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
-      
-
       setUserAddresses(res.data);
 
       const customerLocation = {
@@ -205,7 +162,10 @@ export const AuthProvider = ({ children }) => {
         var distance = getDistance(customerLocation, addressLocation);
         if (distance <= 200) {
           setSelectedAddress(data);
-          setGlobalCoordinates({'latitude':data.latitude,'longitude':data.longitude})
+          setGlobalCoordinates({
+            latitude: data.latitude,
+            longitude: data.longitude,
+          });
         }
       });
     } catch (err) {}
@@ -215,7 +175,7 @@ export const AuthProvider = ({ children }) => {
     if (accessToken !== null) {
       loadCart();
     }
-  }, [accessToken]);
+  }, [accessToken, orderPlaced]);
 
   useEffect(() => {
     if (accessToken !== null && location !== null && user !== null) {
@@ -422,7 +382,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
- 
   const values = {
     isLoading,
     setIsLoading,
@@ -474,8 +433,9 @@ export const AuthProvider = ({ children }) => {
     userAddresses,
     setUserAddresses,
     locationPermissionGranted,
-setLocationPermissionGranted
-    
+    setLocationPermissionGranted,
+    setOrderPlaced,
+    orderPlaced,
   };
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
