@@ -4,47 +4,62 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
+  Image,
+  Linking,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import IonIcon from "react-native-vector-icons/Ionicons";
-import MCIcon from "react-native-vector-icons/MaterialCommunityIcons";
-import FAIcon from "react-native-vector-icons/FontAwesome";
-import * as Location from "expo-location";
 import axios from "axios";
-import { API_URL,WS_URL } from "@env";
+import { API_URL, WS_URL } from "@env";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import { SafeAreaView } from "react-native-safe-area-context";
 import FooterComponent from "../../components/FooterComponent";
 import { authContext } from "../../contexts/AuthContext";
 import LoadingComponent from "./../../components/LoadingComponent";
+import ADIcon from "react-native-vector-icons/AntDesign";
+import MiIcon from "react-native-vector-icons/MaterialIcons";
 
 const ActiveOrderDetailScreen = ({ navigation, route }) => {
-  const screen = Dimensions.get("window");
-  const ASPECT_RATIO = screen.width / 300;
-  const LATITUDE_DELTA = 0.04;
-  const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
   const { order_id } = route.params;
-  const mapRef = useRef();
   const [orderDetails, setOrderDetails] = useState({});
-  const [orderStatus, setOrderStatus] = useState(null);
+  const [orderStatus, setOrderStatus] = useState({});
   const [customerLocation, setCustomerLocation] = useState({});
   const [restrauntLocation, setRestrauntLocation] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [dpLocation, setDpLocation] = useState({});
+  const [deliveryPartner, setDeliveryPartner] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { accessToken } = authContext();
-  var ws = new WebSocket('ws://192.168.0.105:3000/ws/order/'+order_id+'/');
+  const mapRef = useRef(null);
+  const ws = useRef(new WebSocket(WS_URL + "/ws/order/" + order_id + "/")).current;
 
-  ws.onmessage = (e) => {
-    // a message was received
-    const res = JSON.parse(e.data);
-    const data = JSON.parse(res.payload.value)
-    setOrderStatus(data.status)
+  
+
+  useEffect(() => {
+    ws.onmessage = (e) => {
+      const res = JSON.parse(e.data);
+      const data = JSON.parse(res.payload.value);
+
+      setOrderStatus(data);
+      setDpLocation({
+        latitude: data.dp_latitude,
+        longitude: data.dp_longitude,
+      });
+
+      setDeliveryPartner(data.delivery_partner);
+    };
+  }, []);
+
+  const startCall = () => {
+    if (!deliveryPartner || !deliveryPartner?.user?.mobile_no) {
+      return;
+    }
+    Linking.openURL(`tel:${deliveryPartner?.user?.mobile_no}`);
   };
 
   const getOrderDetails = async () => {
     try {
-      setIsLoading(true);
+    
       const res = await axios.get(
         `${API_URL}/restraunt/order-detail/?order_id=${order_id}`,
         {
@@ -53,43 +68,47 @@ const ActiveOrderDetailScreen = ({ navigation, route }) => {
       );
       if (res.data.length > 0) {
         const data = res.data[0];
+
+        console.log("======>", data);
+
         setOrderDetails(data);
 
         setCustomerLocation({
-          latitude: parseFloat(data.customer_latitude),
-          longitude: parseFloat(data.customer_longitude),
-          latitudeDelta: LATITUDE_DELTA,
-          longitudeDelta: LONGITUDE_DELTA,
+          latitude: data.customer_latitude,
+          longitude: data.customer_longitude,
         });
         setRestrauntLocation({
-          latitude: parseFloat(data.restraunt_latitude),
-          longitude: parseFloat(data.restraunt_longitude),
-          latitudeDelta: LATITUDE_DELTA,
-          longitudeDelta: LONGITUDE_DELTA,
+          latitude: data.restraunt_latitude,
+          longitude: data.restraunt_longitude,
         });
 
-        setOrderStatus(data.order_status)
+        setOrderStatus({
+          status: data.order_status,
+        });
 
-        setIsLoading(false);
+        setDeliveryPartner(data.delivery_partner);
+        if (data.deliveryPartner) {
+        }
+
+        setDpLocation({
+          latitude: data.dp_latitude,
+          longitude: data.dp_longitude,
+        });
+
+        
       }
-      setIsLoading(false);
+      
     } catch (err) {
-      setIsLoading(false);
+      console.log(err);
     }
+    setIsLoading(false);
   };
-
-  const makeMapCenter = () => {
-    mapRef.current.fitToCoordinates(
-        [customerLocation, restrauntLocation],
-        false
-      );
-  }
 
   useEffect(() => {
     getOrderDetails();
   }, [order_id]);
 
- 
+
   if (isLoading) {
     return <LoadingComponent />;
   }
@@ -100,6 +119,12 @@ const ActiveOrderDetailScreen = ({ navigation, route }) => {
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => navigation.goBack()}
+          style={{
+            backgroundColor: "#f7cdcd",
+            borderRadius: 15,
+            marginLeft: 10,
+            marginTop: 5,
+          }}
         >
           <FeatherIcon
             name="chevron-left"
@@ -107,22 +132,55 @@ const ActiveOrderDetailScreen = ({ navigation, route }) => {
             style={{ color: "#f78783" }}
           />
         </TouchableOpacity>
-        <View>
-          <Text style={styles.headerTitle}>Order</Text>
-          <Text style={styles.subHeaderTitle}>Order Id : {order_id}</Text>
-        </View>
       </View>
       <ScrollView>
         <MapView
           ref={mapRef}
+          mapType="mutedStandard"
           style={{
             height: 300,
             width: "100%",
+            position: "relative",
           }}
-          initialRegion={restrauntLocation}
-          region={restrauntLocation}
+          initialRegion={{
+            latitude:
+              dpLocation.latitude == 0
+                ? restrauntLocation.latitude
+                : dpLocation.latitude,
+            longitude:
+              dpLocation.longitude == 0
+                ? restrauntLocation.longitude
+                : dpLocation.longitude,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          }}
+          region={{
+            latitude:
+              dpLocation.latitude == 0
+                ? restrauntLocation.latitude
+                : dpLocation.latitude,
+            longitude:
+              dpLocation.longitude == 0
+                ? restrauntLocation.longitude
+                : dpLocation.longitude,
+            latitudeDelta: 0.001,
+            longitudeDelta: 0.001,
+          }}
           provider={PROVIDER_GOOGLE}
-   
+          onMapLoaded={() => {
+            if (dpLocation && dpLocation.latitude > 0) {
+              mapRef.current.fitToSuppliedMarkers([
+                "customer_coordinates",
+                "restraunt_coordinates",
+                "delivery_partner_coordinates",
+              ]);
+            } else {
+              mapRef.current.fitToSuppliedMarkers([
+                "customer_coordinates",
+                "restraunt_coordinates",
+              ]);
+            }
+          }}
         >
           <Marker
             coordinate={customerLocation}
@@ -185,13 +243,142 @@ const ActiveOrderDetailScreen = ({ navigation, route }) => {
               <IonIcon name="pin" style={{}} size={45} color={"#000000"} />
             </View>
           </Marker>
+
+          <Marker
+            coordinate={dpLocation}
+            draggable={false}
+            focusable={true}
+            identifier="delivery_partner_coordinates"
+          >
+            <View style={{ alignItems: "center" }}>
+              <MiIcon
+                name="delivery-dining"
+                style={{}}
+                size={35}
+                color={"#ff6666"}
+              />
+            </View>
+          </Marker>
         </MapView>
 
-        <View>
-          <View>
-            <Text>Delivery Status: {orderStatus}  </Text>
+        <View style={styles.orderDetailsContainer}>
+          <View style={styles.row}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: "#ff6666" }}>
+              ORDER ID
+            </Text>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: "#2b2b2b" }}>
+              #{orderDetails.order_id}
+            </Text>
           </View>
+
+          <View style={styles.liveStatusContainer}>
+            <View style={{ marginRight: 10 }}>
+              <Image
+                source={require("./../../assets/images/pulse.gif")}
+                style={{ width: 30, height: 30 }}
+              />
+            </View>
+
+            <View>
+              <Text style={{ fontWeight: "700", marginBottom: 5 }}>
+                LIVE STATUS
+              </Text>
+              <Text
+                style={{ color: "#ff5555", fontSize: 16, fontWeight: "700" }}
+              >
+                {orderStatus.status}
+              </Text>
+            </View>
+          </View>
+
+          <View style={{...styles.liveStatusContainer, marginTop:0}}>
+            <View style={{ marginRight: 10 }}>
+            <Text style={{ fontWeight: "700", marginBottom: 5 }}>Net Amount <Text style={{fontWeight:"500",color:"#6e6e6e",fontSize:12}}>
+              
+               ({orderDetails.is_cod ? "Pay on Delivery": "Paid Online"})</Text>
+              </Text>
+
+            <View>
+              <Text style={{ fontWeight: "700", marginBottom: 5,fontSize:18 }}>
+              ₹{orderDetails.order_net_amount}
+              </Text>
+             
+            </View>
+          </View>
+          </View>
+
+          {deliveryPartner ? (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                marginVertical: 10,
+              }}
+            >
+              <View
+                style={{
+                  marginRight: 10,
+                  borderWidth: 1,
+                  padding: 5,
+                  borderRadius: 10,
+                  borderColor: "#ff6666",
+                }}
+              >
+                {deliveryPartner && deliveryPartner?.user?.profile_photo ? (
+                  <Image
+                    source={{ uri: deliveryPartner.user.profile_photo }}
+                    style={{ width: 30, height: 30 }}
+                  />
+                ) : (
+                  <ADIcon name="user" color={"#ff6666"} size={30} />
+                )}
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <Text style={{ marginBottom: 5 }}>
+                  {deliveryPartner?.user?.name} is your delivery partner for
+                  your order. Feel free to call him for real time updates.
+                </Text>
+                <Text
+                  style={{
+                    marginBottom: 5,
+                    fontSize: 11,
+                    color: "#6e6e6e",
+                    fontWeight: "700",
+                  }}
+                >
+                  {deliveryPartner?.user?.name} {deliveryPartner?.description}
+                </Text>
+              </View>
+
+              <View style={{ marginLeft: 10 }}>
+                <TouchableOpacity
+                  style={{
+                    borderRadius: 10,
+                    padding: 10,
+                    backgroundColor: "#ff6666",
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                  onPress={startCall}
+                >
+                  <FeatherIcon name="phone" color="#ffffff" size={18} />
+                  <Text style={{ color: "#ffffff", marginLeft: 5 }}>Call</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <View>
+              <Text style={{ fontSize: 18, fontWeight: "700" }}>
+                We soon assign delivery partner
+              </Text>
+            </View>
+          )}
+          
+          
         </View>
+
+
 
         <FooterComponent />
       </ScrollView>
@@ -207,14 +394,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     flexDirection: "row",
     alignItems: "center",
-    position: "relative",
+    position: "absolute",
+    zIndex: 12121,
   },
-  headerTitle: {
-    fontWeight: "700",
-    fontSize: 16,
+  orderDetailsContainer: {
+    marginTop: -10,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 25,
+    paddingVertical: 30,
+    elevation: 10,
+    borderRadius: 30,
   },
-  subHeaderTitle: {
-    fontSize: 12,
-    color: "#636363",
+
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  liveStatusContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    elevation: 10,
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 20,
+    backgroundColor: "#ffffff",
   },
 });

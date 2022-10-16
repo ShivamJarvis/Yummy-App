@@ -47,6 +47,7 @@ const ProceedToPay = ({ navigation, route }) => {
           restraunt_longitude: cartDetails.restraunt.longitude,
           customer_latitude: selectedAddress.latitude,
           customer_longitude: selectedAddress.longitude,
+          customer_address: selectedAddress.id,
           is_cod: true,
           item_count: cartDetails.cart.length,
           delivery_distance: distance,
@@ -56,6 +57,7 @@ const ProceedToPay = ({ navigation, route }) => {
         }
       );
 
+      console.log(res.data)
       if (res.data.status == "success") {
         setOrderPlaced(true)
         setOrderPlaced(false)
@@ -68,7 +70,7 @@ const ProceedToPay = ({ navigation, route }) => {
       }
       setIsLoading(false)
     } catch (err) {
-      console.log(err);
+  
       setIsLoading(false)
     }
     

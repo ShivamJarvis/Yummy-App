@@ -18,7 +18,7 @@ import {STATIC_URL} from '@env'
 
 const ProfileScreen = ({navigation}) => {
   const { user,logoutCustomer } = authContext();
-  console.log(user);
+
   return (
     <SafeAreaView>
       <View
@@ -96,9 +96,7 @@ const ProfileScreen = ({navigation}) => {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.clickContainer} activeOpacity={0.8} onPress={()=>{
-            navigation.navigate("ActiveOrderDetailScreen", {
-              order_id: "O9DFQKGHH6",
-            });
+            navigation.navigate("MyOrdersScreen");
           }} >
             <View style={styles.tabContainer}>
               <IonIcon name="ios-reorder-three-outline" size={20} color="#ff6666" />
