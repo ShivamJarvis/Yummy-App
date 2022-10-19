@@ -69,7 +69,7 @@ const ActiveOrderDetailScreen = ({ navigation, route }) => {
       if (res.data.length > 0) {
         const data = res.data[0];
 
-        console.log("======>", data);
+        
 
         setOrderDetails(data);
 
@@ -136,7 +136,7 @@ const ActiveOrderDetailScreen = ({ navigation, route }) => {
       <ScrollView>
         <MapView
           ref={mapRef}
-          mapType="mutedStandard"
+          mapType="standard"
           style={{
             height: 300,
             width: "100%",

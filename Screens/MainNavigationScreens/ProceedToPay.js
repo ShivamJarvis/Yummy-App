@@ -64,7 +64,7 @@ const ProceedToPay = ({ navigation, route }) => {
         setCart({})
         setCartRestrauntId(null)
         setIsLoading(false)
-        navigation.navigate("ActiveOrderDetailScreen", {
+        navigation.replace("ActiveOrderDetailScreen", {
           order_id: res.data.order_id,
         });
       }

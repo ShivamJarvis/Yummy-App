@@ -26,9 +26,10 @@ import CarouselCardItem, {
 } from "./../../components/HomeScreenComponents/CarouselCardItem";
 
 const HomeScreen = ({ navigation }) => {
+  const { cuisineData } = authContext();
   const [sectionedRestraunts, setSectionedRestraunts] = useState([]);
   const [carouselData, setCarouselData] = useState([]);
-  const [cuisineData, setCuisineData] = useState([]);
+
   const isCarousel = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const { setRefreshing, refreshing, globalCoordinates } = authContext();
@@ -37,13 +38,6 @@ const HomeScreen = ({ navigation }) => {
     try {
       const res = await axios.get(`${API_URL}/restraunt/banner/`);
       setCarouselData(res.data);
-    } catch (err) {}
-  };
-
-  const getCuisineData = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/restraunt/cuisine/`);
-      setCuisineData(res.data);
     } catch (err) {}
   };
 
@@ -87,7 +81,6 @@ const HomeScreen = ({ navigation }) => {
   }, [globalCoordinates, refreshing]);
 
   useEffect(() => {
-    getCuisineData();
     getBannerData();
   }, []);
 

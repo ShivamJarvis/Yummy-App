@@ -6,6 +6,7 @@ import {
   ScrollView,
   Dimensions,
   TextInput,
+  Image,
 } from "react-native";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -24,6 +25,7 @@ import FAIcon from "react-native-vector-icons/FontAwesome";
 import SelectAddress from "../../components/SelectAddress";
 import DeliveryPartnerTip from "../../components/CartComponents/DeliveryPartnerTip";
 import DiscountSheet from "../../components/CartComponents/DiscountSheet";
+import ErrorOrEmptyComponent from "../../components/ErrorOrEmptyComponent";
 
 const CartScreen = ({ navigation }) => {
   const { accessToken, selectedAddress, userAddresses } = authContext();
@@ -40,6 +42,9 @@ const CartScreen = ({ navigation }) => {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [discountCoupons, setDiscountCoupons] = useState([]);
+  const [isRestrauntOpen, setRestrauntOpen] = useState(false);
+  let today = new Date();
+  let currentTime = today.toLocaleTimeString("en-SE");
 
   var dishPreparationTime = 0;
   const handleDeliveryTime = (restrauntCart, calculatedDistance) => {
@@ -146,8 +151,33 @@ const CartScreen = ({ navigation }) => {
     }
   };
 
+  const checkIsRestrauntOpen = () => {
+    if (cartDetails === {}) {
+      return
+    }
+    if(currentTime >= cartDetails?.restraunt?.opening_timing && currentTime < cartDetails?.restraunt?.closing_timing){
+      setRestrauntOpen(true)
+    }
+    else{
+      setRestrauntOpen(false)
+    }
+
+  };
+
+  useEffect(()=>{
+    if(cartDetails!=={}){
+      checkIsRestrauntOpen()
+    }
+  },[cartDetails])
+
   if (loading) {
     return <LoadingComponent />;
+  }
+
+  if(cartDetails !== {}){
+    if(cartDetails.cart.length == 0){
+      return <ErrorOrEmptyComponent iconName={"shopping-cart"} title={"Cart is empty"} subTitle={"Hit the below button to fill your cart with delicious dishes."} headerText={"Cart"} buttonText={"Start Ordering"} screenName={"HomeScreen"} />
+    }
   }
 
   return (
@@ -175,6 +205,15 @@ const CartScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         style={{ backgroundColor: "#ffffff" }}
       >
+         {!isRestrauntOpen && (
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
+            <Image
+              source={require("./../../assets/images/closed.gif")}
+              style={{ width: 120, height: 120 }}
+            />
+          </View>
+        )}
+
         <View style={styles.cartItemsContainer}>
           {cartDetails.cart?.map((item) => (
             <CartItemCard
@@ -202,6 +241,9 @@ const CartScreen = ({ navigation }) => {
             maxLength={80}
           />
         </View>
+
+
+       
 
         <View style={{ marginHorizontal: 10, marginTop: 20 }}>
           <Text style={{ fontWeight: "700", fontSize: 15 }}>
@@ -451,7 +493,7 @@ const CartScreen = ({ navigation }) => {
             </Text>
           </View>
 
-          {distance <= cartDetails?.restraunt?.maximum_delivery_radius && (
+          {distance <= cartDetails?.restraunt?.maximum_delivery_radius && isRestrauntOpen && (
             <TouchableOpacity
               activeOpacity={0.8}
               style={styles.buttonStyle}
@@ -472,6 +514,7 @@ const CartScreen = ({ navigation }) => {
               </Text>
             </TouchableOpacity>
           )}
+          {!isRestrauntOpen && <Text style={styles.mainText}>Unserviceable</Text>}
         </View>
       </View>
 

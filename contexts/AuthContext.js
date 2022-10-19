@@ -37,6 +37,145 @@ export const AuthProvider = ({ children }) => {
   const [userAddresses, setUserAddresses] = useState([]);
   const [locationPermissionGranted, setLocationPermissionGranted] =
     useState(false);
+    const [cuisineData, setCuisineData] = useState([]);
+
+    
+  const [filters,setFilters] = useState([
+    {
+      heading:"Sort",
+      subHeading:"SORT BY",
+      multiSelect:false,
+      isChanged:false,
+      selectedOption:"",
+      options:[
+        {
+          id:0,
+          name:"Rating",
+          is_selected:false
+        },
+        {
+          id:1,
+          name:"Cost: Low To High",
+          is_selected:false
+        },
+        {
+          id:2,
+          name:"Cost: High To Low",
+          is_selected:false
+        },
+      ]
+    },
+    {
+      heading:"Explore",
+      subHeading:"EXPLORE",
+      multiSelect:true,
+      selectedOption:[],
+      isChanged:false,
+      options:[
+        {
+          name:"New on Yummy",
+          is_selected:false
+        },
+        {
+          name:"Yummy Exclusive",
+          is_selected:false
+        },
+      ]
+    },
+    {
+      heading:"Cuisines",
+      subHeading:"FILTER BY CUISINE",
+      multiSelect:true,
+      isChanged:false,
+      selectedOption:[],
+      options:cuisineData
+    },
+    {
+      heading:"Ratings",
+      subHeading:"FILTER BY",
+      multiSelect:true,
+      isChanged:false,
+      selectedOption:[],
+      options:[
+        {
+          name:"Rating 4.5+",
+          is_selected:false
+        },
+        {
+          name:"Rating 4.0+",
+          is_selected:false
+        },
+        {
+          name:"Rating 3.5+",
+          is_selected:false
+        },
+      ]
+    },
+    {
+      heading:"Veg/Non-Veg",
+      subHeading:"FILTER BY",
+      multiSelect:false,
+      selectedOption:"",
+      isChanged:false,
+      options:[
+        {
+          id:3,
+          name:"Pure Veg",
+          is_selected:false
+        },
+        {
+          id:4,
+          name:"Non Veg",
+          is_selected:false
+        },
+        {
+          id:5,
+          name:"Both",
+          is_selected:true
+        },
+      ]
+    },
+    {
+      heading:"Cost for two",
+      subHeading:"FILTER BY",
+      multiSelect:true,
+      isChanged:false,
+      selectedOption:[],
+      options:[
+        {
+          name:"Rs. 200-Rs. 500",
+          is_selected:false
+        },
+        {
+          name:"Greater than Rs. 500",
+          is_selected:false
+        },
+        {
+          name:"Less than Rs. 200",
+          is_selected:false
+        },
+      ]
+    },
+  ])
+
+  const getCuisineData = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/restraunt/cuisine/`);
+
+      setCuisineData(res.data)
+      setFilters(filters.map((item)=>{
+        if(item.heading == 'Cuisines'){
+          item.options = res.data
+        }
+        return item
+      }))
+    } catch (err) {}
+  };
+
+  useEffect(()=>{
+    getCuisineData()
+  },[])
+
 
   const getOTP = async () => {
     try {
@@ -436,6 +575,9 @@ export const AuthProvider = ({ children }) => {
     setLocationPermissionGranted,
     setOrderPlaced,
     orderPlaced,
+    filters,
+setFilters,
+cuisineData
   };
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;

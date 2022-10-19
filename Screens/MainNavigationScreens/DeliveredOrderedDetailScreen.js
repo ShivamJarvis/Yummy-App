@@ -9,14 +9,14 @@ import React, { useEffect, useState } from "react";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import IonIcon from "react-native-vector-icons/Ionicons";
 import axios from "axios";
-import { API_URL, WS_URL } from "@env";
+import { API_URL } from "@env";
 
 import { authContext } from "../../contexts/AuthContext";
 import LoadingComponent from "./../../components/LoadingComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
 import VegNonVegSymbol from "../../components/RestrauntComponent/VegNonVegSymbol";
 import FooterComponent from "../../components/FooterComponent";
-import Timeline from "react-native-timeline-flatlist";
+
 
 const DeliveredOrderedDetailScreen = ({ navigation, route }) => {
   const { order_id } = route.params;

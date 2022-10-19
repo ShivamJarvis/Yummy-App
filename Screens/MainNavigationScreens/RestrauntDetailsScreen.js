@@ -35,15 +35,6 @@ const RestrauntDetails = ({ route, navigation }) => {
 
 
 
-  const wait = (timeout) => {
-    return new Promise((resolve) => setTimeout(resolve, timeout));
-  };
-
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    wait(2000).then(() => setRefreshing(false));
-  }, []);
-
   const [restrauntMenu, setRestrauntMenu] = useState([]);
 
   const [activeSections, setActiveSections] = useState([]);
@@ -55,6 +46,7 @@ const RestrauntDetails = ({ route, navigation }) => {
       .get(`${API_URL}/restraunt/${id}`)
       .then((data) => {
         setRestraunt(data.data);
+
 
         if(currentTime >= data.data.opening_timing && currentTime < data.data.closing_timing){
           setRestrauntOpen(true)
