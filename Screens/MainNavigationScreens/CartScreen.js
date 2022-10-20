@@ -506,6 +506,7 @@ const CartScreen = ({ navigation }) => {
                   cartDetails: cartDetails,
                   deliveryTime: deliveryTime,
                   distance: distance,
+                  selectedCoupon:selectedCoupon
                 });
               }}
             >

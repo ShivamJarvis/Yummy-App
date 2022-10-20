@@ -48,7 +48,7 @@ const DetailedRestrauntCard = ({ restraunt }) => {
               {restraunt.cuisine_description}
             </Text>
             <Text style={styles.subDescription}>
-              {restraunt.location} {Math.round(restraunt.distance * 10) / 10} Km
+              {restraunt.location} | {Math.round(restraunt.distance * 10) / 10} Km
             </Text>
           </View>
         </View>

@@ -55,7 +55,7 @@ const LoginScreen = ({navigation}) => {
 
         <View style={styles.inputContainer}>
             <Text style={{fontSize:16}}>(+91)</Text>
-            <TextInput style={styles.inputText} placeholder='Your Phone Number' onChangeText={handleUserPressInput} keyboardType='number-pad' />
+            <TextInput cursorColor={"#ff6666"} style={styles.inputText} placeholder='Your Phone Number' onChangeText={handleUserPressInput} keyboardType='number-pad' />
         </View>
         <View style={{marginBottom:20}}>
 

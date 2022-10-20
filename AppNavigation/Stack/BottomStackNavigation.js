@@ -1,17 +1,17 @@
-import { StyleSheet, View } from "react-native";
-import HomeStack from "../AppNavigation/Stack/HomeStack";
-import ProfileScreen from "../Screens/MainNavigationScreens/ProfileScreen";
-import FoodScreen from "../Screens/MainNavigationScreens/FoodScreen";
-import DineoutScreen from "../Screens/MainNavigationScreens/DineoutScreen";
+import { StyleSheet } from "react-native";
+import ProfileScreen from "../../Screens/MainNavigationScreens/ProfileScreen";
+import FoodScreen from "../../Screens/MainNavigationScreens/FoodScreen";
+import DineoutScreen from "../../Screens/MainNavigationScreens/DineoutScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import IoniIcons from "react-native-vector-icons/Ionicons";
 import FaIcons from "react-native-vector-icons/FontAwesome";
+import HomeScreen from "../../Screens/MainNavigationScreens/HomeScreen";
 
 
 
 const Stack = createBottomTabNavigator();
 
-const MainNavigation = () => {
+const BottomStackNavigation = () => {
   return (
     <>
    
@@ -42,7 +42,7 @@ const MainNavigation = () => {
     >
       <Stack.Screen
         name="HomeStack"
-        component={HomeStack}
+        component={HomeScreen}
         options={{
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
@@ -95,6 +95,6 @@ const MainNavigation = () => {
   );
 };
 
-export default MainNavigation;
+export default BottomStackNavigation;
 
 const styles = StyleSheet.create({});

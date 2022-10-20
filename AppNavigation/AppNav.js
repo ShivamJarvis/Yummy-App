@@ -1,69 +1,69 @@
-import { NavigationContainer } from '@react-navigation/native';
-import LoginNavigation from './LoginNavigation';
-import MainNavigation from './MainNavigation';
-import {authContext} from './../contexts/AuthContext'
-import { useEffect, useState } from 'react';
-import * as Location from 'expo-location';
-import LoadingComponent from '../components/LoadingComponent';
-import Toast from 'react-native-simple-toast';
-import RequestLocationPermission from '../Screens/HelperScreens/RequestLocationPermission';
+import { NavigationContainer } from "@react-navigation/native";
+import LoginNavigation from "./LoginNavigation";
+import { authContext } from "./../contexts/AuthContext";
+import { useEffect, useState } from "react";
+import * as Location from "expo-location";
+import LoadingComponent from "../components/LoadingComponent";
+import Toast from "react-native-simple-toast";
+import RequestLocationPermission from "../Screens/HelperScreens/RequestLocationPermission";
+import ProtectedRouteNavigation from "./ProtectedRouteNavigation";
 
 
 export default function AppNav() {
-  const {isAuthenticated, setLocation,loginCustomer,setGlobalCoordinates,locationPermissionGranted, setLocationPermissionGranted} = authContext()
+  const {
+    isAuthenticated,
+    setLocation,
+    loginCustomer,
+    setGlobalCoordinates,
+    locationPermissionGranted,
+    setLocationPermissionGranted,
+  } = authContext();
 
   const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState(null);
-  
 
-  
+
   useEffect(() => {
     (async () => {
-      try{
-
+      try {
         let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
-        Toast.show('Permission to access location was denied', Toast.LONG);
-        setLoading(false)
-        return;
-      }
+        if (status !== "granted") {
+       
+          Toast.show("Permission to access location was denied", Toast.LONG);
+          setLoading(false);
+          return;
+        }
 
-      let location = await Location.getCurrentPositionAsync({});
-      setLocationPermissionGranted(true)
-      setLocation(location);
+        let location = await Location.getCurrentPositionAsync({});
+        setLocationPermissionGranted(true);
+        setLocation(location);
 
-      setGlobalCoordinates({'latitude':location.coords.latitude,'longitude':location.coords.longitude})
-     
-    
-      setLoading(false)
+        setGlobalCoordinates({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
 
-      loginCustomer()
+        setLoading(false);
 
-    }catch(err){
-      
-    }
+        loginCustomer();
+      } catch (err) {}
     })();
   }, []);
 
-    if(loading){
-      return <LoadingComponent />
-    }
+  if (loading) {
+    return <LoadingComponent />;
+  }
 
-    if(!locationPermissionGranted){
-      return <RequestLocationPermission />
-    }
-  
-    return (
-      
-      <NavigationContainer>
-       {isAuthenticated ? <MainNavigation /> : <LoginNavigation />}
+  if (!locationPermissionGranted) {
+    return <RequestLocationPermission />;
+  }
 
-       
-        
-      </NavigationContainer>
-      
-    );
-
+  return (
+    <NavigationContainer>
+      {isAuthenticated ? (
+          <ProtectedRouteNavigation />
+      ) : (
+        <LoginNavigation />
+      )}
+    </NavigationContainer>
+  );
 }
-

@@ -12,7 +12,9 @@ import { useNavigation } from "@react-navigation/native";
 const SearchBarComponent = () => {
   const navigation = useNavigation();
   return (
-    <TouchableOpacity style={styles.containerStyle} activeOpacity={0.7}>
+    <TouchableOpacity style={styles.containerStyle} activeOpacity={0.7} onPress={()=>{
+      navigation.navigate("SearchScreen")
+    }}>
       <Text style={{ color: "#6e6e6e" }}>
         Search for restraunt, item and more
       </Text>

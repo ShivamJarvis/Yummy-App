@@ -26,6 +26,7 @@ const ProceedToPay = ({ navigation, route }) => {
     cartDetails,
     distance,
     deliveryTime,
+    selectedCoupon
   } = route.params;
   const { selectedAddress, accessToken,setCart,setCartRestrauntId,setOrderPlaced } = authContext();
   const [isLoading,setIsLoading] = useState(false)
@@ -51,13 +52,14 @@ const ProceedToPay = ({ navigation, route }) => {
           is_cod: true,
           item_count: cartDetails.cart.length,
           delivery_distance: distance,
+          selectedCoupon:selectedCoupon?.id
         },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
 
-      console.log(res.data)
+ 
       if (res.data.status == "success") {
         setOrderPlaced(true)
         setOrderPlaced(false)

@@ -24,6 +24,7 @@ import Carousel from "react-native-snap-carousel";
 import CarouselCardItem, {
   SLIDER_WIDTH,
 } from "./../../components/HomeScreenComponents/CarouselCardItem";
+import SearchBarComponent from "../../components/SearchBarComponent";
 
 const HomeScreen = ({ navigation }) => {
   const { cuisineData } = authContext();
@@ -104,12 +105,13 @@ const HomeScreen = ({ navigation }) => {
     >
       <StatusBar backgroundColor={"#f78783"} />
       <HeaderComponent />
+      <SearchBarComponent />
 
       <ScrollView
         style={{ flex: 1, marginTop: 20 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} colors={['#ff6666']} onRefresh={onRefresh} />
         }
       >
         {/* Cuisines */}

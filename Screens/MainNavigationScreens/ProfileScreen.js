@@ -37,7 +37,7 @@ const ProfileScreen = ({navigation}) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView>
+      <ScrollView showsVerticalScrollIndicator={false}>
         <View style={{ alignItems: "center" }}>
           <View
             style={{
@@ -104,14 +104,18 @@ const ProfileScreen = ({navigation}) => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.clickContainer} activeOpacity={0.8} >
+          <TouchableOpacity style={styles.clickContainer} activeOpacity={0.8} onPress={()=>{
+            navigation.navigate("MyFavouritesRestrauntScreen");
+          }} >
             <View style={styles.tabContainer}>
               <FAIcon name="heart-o" size={20} color="#ff6666" />
               <Text style={styles.tabTitle}>My Favourites</Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.clickContainer} activeOpacity={0.8} >
+          <TouchableOpacity style={styles.clickContainer} activeOpacity={0.8} onPress={()=>{
+            navigation.navigate("ManageAddressesScreen");
+          }} >
             <View style={styles.tabContainer}>
               <FAIcon name="address-book-o" size={20} color="#ff6666" />
               <Text style={styles.tabTitle}>Manage Addresses</Text>
